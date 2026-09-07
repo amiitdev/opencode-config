@@ -16,17 +16,18 @@ OpenCode is an AI-powered coding assistant that runs in your terminal. It connec
 
 ## Table of Contents
 
-- [Quick Start](#-quick-start)
-- [OmniRoute Setup (Step by Step)](#-omniroute-setup-step-by-step)
-- [Antigravity Integration & Multi-Device Setup](#-antigravity-integration--multi-device-setup)
-- [IP Rate-Limiting Flaw & Account Isolation](#-ip-rate-limiting-flaw--account-isolation)
-- [Config Files](#-config-files)
-- [Providers & Models](#-providers--models)
-- [MCP Servers](#-mcp-servers)
-- [Commands Reference](#-commands-reference)
-- [OpenCode Setup Guide](#-opencode-setup-guide)
-- [Termux Setup](#-termux-setup)
-- [Keyboard Shortcuts](#-keyboard-shortcuts)
+- [What is OpenCode?](#what-is-opencode)
+- [Quick Start](#quick-start)
+- [OmniRoute Setup (Step by Step)](#omniroute-setup-step-by-step)
+- [Antigravity Integration & Multi-Device Setup](#antigravity-integration--multi-device-setup)
+- [IP Rate-Limiting Flaw & Account Isolation](#ip-rate-limiting-flaw--account-isolation)
+- [Config Files](#config-files)
+- [Providers & Models](#providers--models)
+- [MCP Servers](#mcp-servers)
+- [Commands Reference](#commands-reference)
+- [Termux Setup](#termux-setup)
+- [License](#license)
+- [Author](#author)
 
 ---
 
@@ -90,7 +91,7 @@ The dashboard opens automatically at `http://localhost:20128` (default password:
 
 ---
 
-## ⚡ Antigravity Integration & Multi-Device Setup
+## Antigravity Integration & Multi-Device Setup
 
 **Antigravity** provides access to Google DeepMind's Gemini models (`gemini-3.6-flash-high`, `gemini-3.5-pro`, etc.) with high speed (~60–70ms latency), full tool-calling support, and zero token cost via Google OAuth.
 
@@ -103,7 +104,7 @@ The dashboard opens automatically at `http://localhost:20128` (default password:
 
 ---
 
-## ⚠️ IP Rate-Limiting Flaw & Account Isolation
+## IP Rate-Limiting Flaw & Account Isolation
 
 ### The Flaw with Default Free Tier Models (`oc/*`)
 * Default unauthenticated free-tier models (like `oc/*`) enforce rate limiting **by public IPv4 address** (`49.47.132.137`).
