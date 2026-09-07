@@ -3,16 +3,53 @@
   "default_agent": "build",
   "permission": "allow",
   "provider": {
+    "opencode-free": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "OpenCode Free",
+      "options": {
+        "baseURL": "http://localhost:20128/v1"
+      },
+      "models": {
+        "oc/big-pickle": { "name": "big-pickle", "tool_call": true, "reasoning": true },
+        "oc/deepseek-v4-flash-free": { "name": "deepseek-v4-flash-free", "tool_call": true, "reasoning": true },
+        "oc/mimo-v2.5-free": { "name": "mimo-v2.5-free", "tool_call": true, "reasoning": true },
+        "oc/hy3-free": { "name": "hy3-free", "tool_call": true, "reasoning": true },
+        "oc/nemotron-3-ultra-free": { "name": "nemotron-3-ultra-free", "tool_call": true, "reasoning": true },
+        "oc/north-mini-code-free": { "name": "north-mini-code-free", "tool_call": true, "reasoning": true }
+      }
+    },
+    "omniroute": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "OmniRoute (OpenRouter)",
+      "options": {
+        "baseURL": "http://localhost:20128/v1"
+      },
+      "models": {
+        "auto/best-coding": { "name": "Auto Best Coding", "tool_call": true, "reasoning": true },
+        "auto/best-fast": { "name": "Auto Best Fast", "tool_call": true, "reasoning": true },
+        "auto/best-free": { "name": "Auto Best Free", "tool_call": true, "reasoning": true },
+        "auto/best-reasoning": { "name": "Auto Best Reasoning", "tool_call": true, "reasoning": true },
+        "auto/best-vision": { "name": "Auto Best Vision", "tool_call": true, "reasoning": true, "attachment": true },
+        "auto/coding": { "name": "Auto Coding", "tool_call": true, "reasoning": true },
+        "auto/fast": { "name": "Auto Fast", "tool_call": true, "reasoning": true },
+        "auto/chat": { "name": "Auto Chat", "tool_call": true, "reasoning": true },
+        "auto/cheap": { "name": "Auto Cheap", "tool_call": true, "reasoning": true },
+        "auto/smart": { "name": "Auto Smart", "tool_call": true, "reasoning": true },
+        "auto/pro-coding": { "name": "Auto Pro Coding", "tool_call": true, "reasoning": true },
+        "auto/pro-reasoning": { "name": "Auto Pro Reasoning", "tool_call": true, "reasoning": true },
+        "auto/claude-opus": { "name": "Claude Opus", "tool_call": true, "reasoning": true },
+        "auto/claude-sonnet": { "name": "Claude Sonnet", "tool_call": true, "reasoning": true },
+        "auto/offline": { "name": "Offline", "tool_call": true, "reasoning": true }
+      }
+    },
     "ollama": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "Ollama",
+      "name": "Ollama (Local)",
       "options": {
         "baseURL": "http://localhost:11434/v1"
       },
       "models": {
-        "qwen3.5": {
-          "name": "qwen3.5"
-        }
+        "qwen3.5": { "name": "qwen3.5" }
       }
     },
     "ollama-cloud": {
@@ -21,7 +58,7 @@
       "options": {
         "baseURL": "https://ollama.com/v1",
         "headers": {
-          "Authorization": "Bearer YOUR_OLLAMA_CLOUD_TOKEN"
+          "Authorization": "Bearer YOUR_KEY_HERE"
         }
       },
       "models": {
@@ -33,386 +70,24 @@
         "nemotron-3-super": { "name": "nemotron-3-super" },
         "nemotron-3-ultra": { "name": "nemotron-3-ultra" }
       }
-    },
-    "omniroute": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "OmniRoute (Free)",
-      "options": {
-        "baseURL": "http://localhost:20128/v1"
-      },
-      "models": {
-        "auto": {
-          "name": "Auto (best available)",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/best-coding": {
-          "name": "Auto Best Coding",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/best-reasoning": {
-          "name": "Auto Best Reasoning",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/best-fast": {
-          "name": "Auto Best Fast",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/best-vision": {
-          "name": "Auto Best Vision",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 },
-          "attachment": true
-        },
-        "auto/coding": {
-          "name": "Auto Coding",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/fast": {
-          "name": "Auto Fast",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/chat": {
-          "name": "Auto Chat",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/cheap": {
-          "name": "Auto Cheap",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/smart": {
-          "name": "Auto Smart",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/pro-coding": {
-          "name": "Auto Pro Coding",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/pro-reasoning": {
-          "name": "Auto Pro Reasoning",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/best-chat": {
-          "name": "best-chat",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/best-coding-fast": {
-          "name": "best-coding-fast",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/pro-vision": {
-          "name": "pro-vision",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 },
-          "attachment": true
-        },
-        "auto/pro-chat": {
-          "name": "pro-chat",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/pro-fast": {
-          "name": "pro-fast",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/offline": {
-          "name": "offline",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/claude-opus": {
-          "name": "claude-opus",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/claude-sonnet": {
-          "name": "claude-sonnet",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/best-free": {
-          "name": "best-free",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/best-chaos": {
-          "name": "best-chaos",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/chaos": {
-          "name": "chaos",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/coding:fast": {
-          "name": "coding:fast",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/coding:cheap": {
-          "name": "coding:cheap",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/coding:free": {
-          "name": "coding:free",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/coding:pro": {
-          "name": "coding:pro",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/coding:reliable": {
-          "name": "coding:reliable",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/reasoning": {
-          "name": "reasoning",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/reasoning:pro": {
-          "name": "reasoning:pro",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/vision": {
-          "name": "vision",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 },
-          "attachment": true
-        },
-        "auto/multimodal": {
-          "name": "multimodal",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 },
-          "attachment": true
-        },
-        "auto/glm": {
-          "name": "glm",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/minimax": {
-          "name": "minimax",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/mimo": {
-          "name": "mimo",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/zai": {
-          "name": "zai",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/gemma": {
-          "name": "gemma",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/llama": {
-          "name": "llama",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "auto/gemini": {
-          "name": "gemini",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "oc/big-pickle": {
-          "name": "big-pickle",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "oc/deepseek-v4-flash-free": {
-          "name": "deepseek-v4-flash-free",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "oc/mimo-v2.5-free": {
-          "name": "mimo-v2.5-free",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "oc/hy3-free": {
-          "name": "hy3-free",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "oc/nemotron-3-ultra-free": {
-          "name": "nemotron-3-ultra-free",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "oc/north-mini-code-free": {
-          "name": "north-mini-code-free",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "felo/felo-chat": {
-          "name": "felo-chat",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "felo/felo-search": {
-          "name": "felo-search",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "felo/felo-scholar": {
-          "name": "felo-scholar",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "felo/felo-social": {
-          "name": "felo-social",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        },
-        "felo/felo-document": {
-          "name": "felo-document",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 },
-          "attachment": true
-        },
-        "mcode/mimo-auto": {
-          "name": "mimo-auto",
-          "tool_call": true,
-          "reasoning": true,
-          "interleaved": { "field": "reasoning_content" },
-          "limit": { "context": 1048576, "output": 384000 }
-        }
-      }
     }
   },
   "model": "omniroute/auto/best-coding",
-  "small_model": "omniroute/auto/best-coding",
+  "small_model": "omniroute/auto/best-fast",
   "mcp": {
     "gmail": {
       "type": "local",
       "command": ["npx", "-y", "@gongrzhe/server-gmail-autoauth-mcp"],
       "enabled": true
+    },
+    "github": {
+      "type": "remote",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "enabled": true,
+      "oauth": false,
+      "headers": {
+        "Authorization": "Bearer {env:GITHUB_PERSONAL_ACCESS_TOKEN}"
+      }
     }
   }
 }
