@@ -676,5 +676,17 @@
     }
   },
   "model": "omniroute/auto/best-coding",
-  "small_model": "omniroute/auto/best-coding"
+  "small_model": "omniroute/auto/best-coding",
+  "mcp": {
+    "gmail": {
+      "type": "local",
+      "command": ["npx", "-y", "@gongrzhe/server-gmail-autoauth-mcp"],
+      "enabled": true
+    },
+    "reddit": {
+      "type": "local",
+      "command": ["npx", "-y", "reddit-mcp-buddy"],
+      "enabled": true
+    }
+  }
 }
