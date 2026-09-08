@@ -27,6 +27,7 @@ OpenCode is an AI-powered coding assistant that runs in your terminal. It connec
   - [Gmail](#gmail-local)
   - [Reddit](#reddit-mcp-buddy)
   - [Playwright (Browser Agent)](#playwright-browser-agent)
+  - [Render (Cloud Infrastructure)](#render-remote)
   - [GitHub](#github-remote)
 - [Browser Agent Authentication](#browser-agent-authentication)
 - [Commands Reference](#commands-reference)
@@ -272,6 +273,56 @@ Control a web browser — click buttons, fill forms, navigate websites. Supports
 ```
 
 **See [Browser Agent Authentication](#browser-agent-authentication) below for setup.**
+
+---
+
+### Render (Remote)
+Manage your Render cloud infrastructure — web services, databases, deploys, logs, and metrics — directly from OpenCode using natural language.
+
+| Feature | Description |
+|---------|-------------|
+| `list_services` | List all services in your workspace |
+| `create_web_service` | Create new web services (Node, Python, Go, Docker, etc.) |
+| `trigger_deploy` | Deploy or redeploy services |
+| `list_logs` | View service logs with filters |
+| `get_metrics` | CPU, memory, instance count, HTTP metrics |
+| `query_render_postgres` | Run SQL queries on your databases |
+| `create_postgres` | Create new Postgres databases |
+| `create_key_value` | Create Redis-compatible key-value stores |
+
+**Setup:**
+
+1. Get your API key from https://dashboard.render.com → Account Settings → API Keys
+2. Set environment variable:
+```bash
+export RENDER_API_KEY="rnd_your_api_key_here"
+```
+
+3. Add to `~/.zshrc` for persistence:
+```bash
+echo 'export RENDER_API_KEY="rnd_your_api_key_here"' >> ~/.zshrc
+```
+
+**Config:**
+```json
+{
+  "render": {
+    "type": "remote",
+    "url": "https://mcp.render.com/mcp",
+    "enabled": true,
+    "headers": {
+      "Authorization": "Bearer {env:RENDER_API_KEY}"
+    }
+  }
+}
+```
+
+**Example prompts:**
+- "List my Render services"
+- "Create a new Postgres database named user-db with 5 GB storage"
+- "Show me the error logs for my API service"
+- "Deploy my web service and clear the build cache"
+- "What was the busiest traffic day for my service this month?"
 
 ---
 
