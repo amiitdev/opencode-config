@@ -24,6 +24,11 @@ OpenCode is an AI-powered coding assistant that runs in your terminal. It connec
 - [Config Files](#config-files)
 - [Providers & Models](#providers--models)
 - [MCP Servers](#mcp-servers)
+  - [Gmail](#gmail-local)
+  - [Reddit](#reddit-mcp-buddy)
+  - [Playwright (Browser Agent)](#playwright-browser-agent)
+  - [GitHub](#github-remote)
+- [Browser Agent Authentication](#browser-agent-authentication)
 - [Commands Reference](#commands-reference)
 - [Termux Setup](#termux-setup)
 - [License](#license)
@@ -179,6 +184,97 @@ Auto-authenticates with your Google account.
 }
 ```
 
+---
+
+### Reddit (MCP Buddy)
+Browse Reddit, search posts, get comments, and analyze users. Zero setup required — works anonymously (10 rpm). Add free Reddit API credentials for 100 rpm.
+
+| Feature | Description |
+|---------|-------------|
+| `browse_subreddit` | Browse any subreddit (hot/new/top/rising) |
+| `search_reddit` | Search across Reddit or specific subreddits |
+| `get_post_details` | Fetch post with full comment threads |
+| `user_analysis` | Analyze any Reddit user's karma and activity |
+| `reddit_explain` | Explain Reddit terms and slang |
+
+**Anonymous mode** (no credentials needed):
+```json
+{
+  "reddit": {
+    "type": "local",
+    "command": ["npx", "-y", "reddit-mcp-buddy"],
+    "enabled": true
+  }
+}
+```
+
+**Authenticated mode** (100 rpm, optional):
+```json
+{
+  "reddit": {
+    "type": "local",
+    "command": ["npx", "-y", "reddit-mcp-buddy"],
+    "enabled": true,
+    "environment": {
+      "REDDIT_CLIENT_ID": "your_client_id",
+      "REDDIT_CLIENT_SECRET": "your_client_secret",
+      "REDDIT_USERNAME": "your_username",
+      "REDDIT_PASSWORD": "your_password"
+    }
+  }
+}
+```
+
+**Get free Reddit credentials:**
+1. Go to https://www.reddit.com/prefs/apps
+2. Click "create another app..."
+3. Select type: **script** (critical for 100 rpm)
+4. Redirect URI: `http://localhost:8080`
+5. Copy Client ID and Secret
+
+---
+
+### Playwright (Browser Agent)
+Control a web browser — click buttons, fill forms, navigate websites. Supports persistent sessions so you can log into sites once and reuse the session.
+
+| Feature | Description |
+|---------|-------------|
+| `browser_navigate` | Open any URL |
+| `browser_click` | Click buttons and links |
+| `browser_type` | Type into text boxes |
+| `browser_snapshot` | See what's on the page |
+| `browser_screenshot` | Take screenshots |
+| `browser_evaluate` | Run JavaScript on the page |
+
+```json
+{
+  "playwright": {
+    "type": "local",
+    "command": ["npx", "-y", "@playwright/mcp", "--user-data-dir", "/home/amit/.playwright-auth"],
+    "enabled": true
+  }
+}
+```
+
+**How it works:**
+```
+┌─────────────────────────────────────────┐
+│  First time: Manual login               │
+│  Open browser → Log into sites          │
+│  → Cookies saved to ~/.playwright-auth/ │
+├─────────────────────────────────────────┤
+│  After restart: Auto-login              │
+│  OpenCode starts Playwright MCP         │
+│  → Reads saved cookies                  │
+│  → Already logged into Reddit/Twitter   │
+│  → AI can now browse as you             │
+└─────────────────────────────────────────┘
+```
+
+**See [Browser Agent Authentication](#browser-agent-authentication) below for setup.**
+
+---
+
 ### GitHub (Remote)
 Connects to GitHub API via personal access token.
 ```json
@@ -193,6 +289,70 @@ Connects to GitHub API via personal access token.
   }
 }
 ```
+
+---
+
+## Browser Agent Authentication
+
+To log into sites like Reddit, Twitter, or LinkedIn (which require 2FA/CAPTCHAs), use the **persistent browser session** approach:
+
+### Step 1: Open browser for manual login
+
+```bash
+# Install Playwright if not already installed
+cd /tmp && npm install playwright
+
+# Create login script
+cat > /tmp/login-browser.js << 'EOF'
+const { chromium } = require('playwright');
+
+(async () => {
+  const context = await chromium.launchPersistentContext('/home/amit/.playwright-auth', {
+    headless: false,
+    viewport: { width: 1280, height: 800 }
+  });
+  
+  const page = context.pages()[0] || await context.newPage();
+  await page.goto('https://www.reddit.com/login');
+  
+  console.log('='.repeat(50));
+  console.log('BROWSER OPENED - Log into your sites:');
+  console.log('  1. Reddit is open - log in now');
+  console.log('  2. Then open Twitter, LinkedIn etc.');
+  console.log('  3. When DONE, press Ctrl+C');
+  console.log('='.repeat(50));
+  
+  process.on('SIGINT', async () => {
+    console.log('\nSaving session...');
+    await context.close();
+    console.log('Session saved to /home/amit/.playwright-auth/');
+    process.exit(0);
+  });
+  
+  await new Promise(() => {});
+})();
+EOF
+
+# Run it
+node /tmp/login-browser.js
+```
+
+### Step 2: Log into sites manually
+- Reddit login page opens
+- Log in normally (complete 2FA, CAPTCHAs, etc.)
+- Open new tabs for Twitter, LinkedIn, etc.
+
+### Step 3: Save session
+- Press `Ctrl+C` in terminal
+- Session saves to `~/.playwright-auth/`
+
+### Step 4: Use in OpenCode
+After restart, ask OpenCode:
+- "Open Reddit and show my homepage"
+- "Go to Twitter and check my notifications"
+- "Fill out the login form on example.com"
+
+**Note:** Google blocks automated browsers. Use the Gmail MCP server for Google/Gmail instead.
 
 ---
 
