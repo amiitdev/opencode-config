@@ -1,443 +1,607 @@
-# OpenCode AI Configuration
+# Why OpenCode's free tier worked on the laptop but not the phone
 
-My personal **OpenCode** setup - a powerful AI coding assistant with custom providers, models, and MCP integrations.
+> **Debugging field notes** — a full, teacher-style walkthrough of one real session:
+> from *"it just doesn't work over SSH"* all the way down to OpenCode Zen's per-IP rate limiter.
 
-![OpenCode](https://img.shields.io/badge/OpenCode-AI-blue?style=flat-square&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTEyIDJMMyA3djEwbDkgNSA5LTVIN0wxMiAyeiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==)
-![License](https://img.shields.io/badge/license-MIT-green?style=flat-square)
-![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20Termux-lightgrey?style=flat-square)
-
----
-
-## What is OpenCode?
-
-OpenCode is an AI-powered coding assistant that runs in your terminal. It connects to various LLM providers, supports MCP (Model Context Protocol) servers, and helps you code, debug, and build projects faster.
+An interactive HTML version of these notes lives in [`index.html`](./index.html).
 
 ---
 
-## Table of Contents
+## Contents
 
-- [What is OpenCode?](#what-is-opencode)
-- [Quick Start](#quick-start)
-- [OmniRoute Setup (Step by Step)](#omniroute-setup-step-by-step)
-- [Antigravity Integration & Multi-Device Setup](#antigravity-integration--multi-device-setup)
-- [IP Rate-Limiting Flaw & Account Isolation](#ip-rate-limiting-flaw--account-isolation)
-- [Config Files](#config-files)
-- [Providers & Models](#providers--models)
-- [MCP Servers](#mcp-servers)
-  - [Gmail](#gmail-local)
-  - [Reddit](#reddit-mcp-buddy)
-  - [Playwright (Browser Agent)](#playwright-browser-agent)
-  - [Render (Cloud Infrastructure)](#render-remote)
-  - [GitHub](#github-remote)
-- [Browser Agent Authentication](#browser-agent-authentication)
-- [Commands Reference](#commands-reference)
-- [Termux Setup](#termux-setup)
-- [License](#license)
-- [Author](#author)
+1. [The Mission & the Symptom](#1-the-mission--the-symptom)
+2. [The Starting Setup](#2-the-starting-setup)
+3. [Two Different "OpenCode"s (v1 vs v2)](#3-two-different-opencodes-v1-vs-v2)
+4. [Decoding the Error Message](#4-decoding-the-error-message)
+5. [Attempt 1 — Upgrade the Phone to v2](#5-attempt-1--upgrade-the-phone-to-v2)
+6. [Attempt 2 — Why v2 Can't Run on Termux](#6-attempt-2--why-v2-cant-run-on-termux)
+7. [OmniRoute — "free router" that fails](#7-omniroute--free-router-that-fails)
+8. [Same Wi-Fi = One Shared Quota](#8-same-wi-fi--one-shared-quota)
+9. [Inside the Laptop's Working VPN](#9-inside-the-laptops-working-vpn)
+10. [The Phone's VPN Was Doing Nothing](#10-the-phones-vpn-was-doing-nothing)
+11. [The IPv6 Leak](#11-the-ipv6-leak)
+12. [Proton VPN Settings That Matter](#12-proton-vpn-settings-that-matter)
+13. [Reaching the Phone over USB (ADB)](#13-reaching-the-phone-over-usb-adb)
+14. [The Decisive Experiments](#14-the-decisive-experiments)
+15. [Server Roulette — The Exact IP Decides](#15-server-roulette--the-exact-ip-decides)
+16. [Two Devices, Two Buckets — or One?](#16-two-devices-two-buckets--or-one)
+17. [The "VPN Trick" — Why It Keeps Working After Disconnect](#17-the-vpn-trick--why-it-keeps-working-after-disconnect)
+18. [Under the Hood — OpenCode Zen's Limiter](#18-under-the-hood--opencode-zens-limiter)
+19. [The Toolbox](#19-the-toolbox)
+20. [Decision Tree — "Free Tier Fails"](#20-decision-tree--free-tier-fails)
+21. [Takeaways & Final State](#21-takeaways--final-state)
+
+## 1. The Mission & the Symptom
+
+**Goal:** use **OpenCode** (an AI coding agent) from a phone over SSH, exactly like it works on the laptop — including its **free models**.
+
+**Symptom:** OpenCode launched fine on the phone, but *every* request failed:
+
+```
+AI_APICallError: OpenCode's free tier can only be used from within OpenCode.
+Download it at https://opencode.ai and keep building.
+```
+
+The same command worked on the laptop — *same account, same model, same network.*
+
+**What these notes teach:**
+
+- How to read a misleading error message
+- Why two devices on the same Wi-Fi share failure
+- Two different "OpenCode" versions (v1 vs v2) and which runs on Android
+- VPN mechanics: tunnels, IPv6 leaks, LAN blocking, server IPs
+- Per-IP rate limiting and how to reliably find a working server
+- A repeatable debugging method: isolate one variable at a time
 
 ---
 
-## Quick Start
+## 2. The Starting Setup
+
+```
+  LAPTOP (Linux)                     PHONE (Android / Termux)
+  192.168.29.133                     192.168.29.192
+  opencode v2.0.29 (@opencode/cli)   opencode v1.18.22 (standalone binary)
+        |                                    ^
+        +---------- ssh -p 8022 -------------+
+             (Termux sshd listens on 8022)
+```
+
+First contact:
 
 ```bash
-# 1. Install OpenCode
-npm install -g opencode
-
-# 2. Clone this repo
-git clone https://github.com/amiitdev/opencode-config.git
-cd opencode-config
-
-# 3. Copy config to your home directory
-cp configs/opencode.json ~/opencode.json
-
-# 4. Start OpenCode
-opencode
+ssh -p 8022 u0_a395@192.168.29.192 \
+  'echo CONNECTED; uname -a; which opencode; opencode --version'
 ```
 
----
+SSH worked — so the problem was **inside** OpenCode, not the connection.
 
-## OmniRoute Setup (Step by Step)
+| Check | Result |
+|---|---|
+| `uname -a` | aarch64 **Android** (not plain Linux!) |
+| `which opencode` | `~/.opencode/bin/opencode` (standalone ELF) |
+| `opencode --version` | **1.18.22** (laptop was 2.0.29) |
 
-OmniRoute is a free AI proxy that runs locally on your machine. It routes requests to multiple free LLM providers automatically. This is the **core** of the setup - OpenCode connects to OmniRoute to access free models.
-
-### What is OmniRoute?
-
-```
-Your OpenCode  ──>  OmniRoute (localhost:20128)  ──>  Free AI Models
-   (client)            (proxy/gateway)                (GPT, Claude, Gemini, etc.)
-```
-
-- **One URL** for all models: `http://localhost:20128/v1`
-- **Auto-routing**: Picks the best free provider automatically (`auto/best-coding`)
-- **No API keys needed** for free providers (Antigravity OAuth, Kiro, OpenCode Free)
-- **Dashboard** at `http://localhost:20128` to manage everything
-
----
-
-### Step 1: Install OmniRoute
+**Side-quest — sshd kept dying.** Termux's SSH server repeatedly died (Android battery killer). Fix on the phone:
 
 ```bash
-# Install globally
-npm install -g omniroute
-
-# Verify installation
-omniroute --version
+termux-wake-lock
+sshd
 ```
 
----
+## 3. Two Different "OpenCode"s (v1 vs v2)
 
-### Step 2: Start OmniRoute
+A **huge** source of confusion: there are two major product lines.
+
+| | OpenCode 1 (v1) | OpenCode 2 (v2) |
+|---|---|---|
+| npm package | `opencode-ai` (latest 1.19.3) | `@opencode/cli` (2.0.32) |
+| Install | curl script → `~/.opencode/bin` | npm global / `/v2/install` |
+| Runtime | single Bun binary | multi-process (CLI + `serve`) |
+| Laptop had | — | **2.0.29** |
+| Phone had | **1.18.22** | — |
+
+The installer trick:
 
 ```bash
-# Start the server
-omniroute
+curl -fsSL https://opencode.ai/install     # installs v1 ONLY
+curl -fsSL https://opencode.ai/v2/install  # installs v2
 ```
 
-The dashboard opens automatically at `http://localhost:20128` (default password: `change me`).
+The v1 installer **refuses** v2 versions on purpose (and vice-versa). Reading the installer script is how we discovered the `/v2/install` path.
 
 ---
 
-## Antigravity Integration & Multi-Device Setup
+## 4. Decoding the Error Message
 
-**Antigravity** provides access to Google DeepMind's Gemini models (`gemini-3.6-flash-high`, `gemini-3.5-pro`, etc.) with high speed (~60–70ms latency), full tool-calling support, and zero token cost via Google OAuth.
-
-### How to Connect Antigravity in OmniRoute
-
-1. Open OmniRoute Dashboard at `http://localhost:20128/dashboard`.
-2. Go to **Providers** → **Antigravity**.
-3. Click **Add Connection** → Sign in with your Google/Gmail account.
-4. Click **Auto Sync** → **Test All Models**.
-
----
-
-## IP Rate-Limiting Flaw & Account Isolation
-
-### The Flaw with Default Free Tier Models (`oc/*`)
-* Default unauthenticated free-tier models (like `oc/*`) enforce rate limiting **by public IPv4 address** (`49.47.132.137`).
-* When multiple devices (e.g. laptop and phone) are connected to the same Wi-Fi network, they share the **exact same public IP address**.
-* If laptop requests hit the free-tier rate limit, OpenCode on your phone **also gets rate-limited instantly** (`400: Error from provider / 429 Rate Limit Exceeded`).
-
-### The Solution: Per-Device Google Account Isolation
-Antigravity solves this vulnerability because quota is tracked **per Google Account**, not per IP address:
+The message *sounds* like a client/version problem, but it is reused for **several** different server-side gates. This is the #1 lesson.
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│               SAME WI-FI (IP: 49.47.132.137)            │
-│                                                         │
-│  Laptop (OmniRoute) ──> Google Account A               │
-│                        (amitkumar.devnode@gmail.com)    │
-│                        [Separate Quota]                │
-│                                                         │
-│  Phone  (OmniRoute) ──> Google Account B               │
-│                        (igac1924@gmail.com)             │
-│                        [Separate Quota]                │
-└─────────────────────────────────────────────────────────┘
+"OpenCode's free tier can only be used from within OpenCode."
 ```
 
-* **Laptop setup:** Uses Google Account `amitkumar.devnode@gmail.com`.
-* **Phone setup:** Uses Google Account `igac1924@gmail.com`.
-* **Result:** Exhausting limits on one device does **NOT** block or affect the other device, providing complete multi-device isolation.
+The same text is returned for (at least) two unrelated reasons:
 
----
+- **Gate 1 — Client identity:** "Is the caller a genuine OpenCode client?" A third-party proxy (OmniRoute) or a raw `curl` fails this.
+- **Gate 2 — Network / IP:** "From which IP is it asking?" Rate limits, reputation and region are all keyed on the egress IP.
 
-## Config Files
-
-| File | Description | Location |
-|------|-------------|----------|
-| `opencode.json` | Main active config (full 51 models) | `~/opencode.json` |
-| `configs/opencode.json` | 15-model template separating `opencode-free` and `omniroute` | `opencode-config/configs/opencode.json` |
-| `configs/opencode-github-mcp.json` | Standalone GitHub Copilot MCP configuration | `opencode-config/configs/opencode-github-mcp.json` |
-
----
-
-## Providers & Models
-
-### OmniRoute (Free Proxy) - Primary Provider
-
-**Base URL:** `http://localhost:20128/v1`
-
-| Model | Use Case | Context | Output |
-|-------|----------|---------|--------|
-| `auto/best-coding` | **Default** - Best for coding tasks (routes to Antigravity Gemini) | 1M | 384K |
-| `auto/best-reasoning` | Complex reasoning & analysis | 1M | 384K |
-| `auto/best-fast` | Quick tasks, fast responses | 1M | 384K |
-| `auto/best-vision` | Image analysis & vision tasks | 1M | 384K |
-| `auto/coding` | General coding assistance | 1M | 384K |
-| `auto/fast` | Speed-optimized responses | 1M | 384K |
-| `auto/chat` | Casual conversation | 1M | 384K |
-| `auto/cheap` | Budget-friendly option | 1M | 384K |
-| `auto/smart` | High intelligence tasks | 1M | 384K |
-| `auto/pro-coding` | Professional-grade coding | 1M | 384K |
-
----
-
-## MCP Servers
-
-### Gmail (Local)
-Auto-authenticates with your Google account.
-```json
-{
-  "gmail": {
-    "type": "local",
-    "command": ["npx", "-y", "@gongrzhe/server-gmail-autoauth-mcp"],
-    "enabled": true
-  }
-}
+```
+LAPTOP  opencode v2 --direct--> Zen   identity OK   IP OK/FAIL
+PHONE   opencode v1 -> OmniRoute -> Zen   identity FAIL   IP FAIL
+        |
+        +- VPN / fresh IP fixes the IP gate...
+           ...but NOT the identity gate.  Same error text!
 ```
 
 ---
 
-### Reddit (MCP Buddy)
-Browse Reddit, search posts, get comments, and analyze users. Zero setup required — works anonymously (10 rpm). Add free Reddit API credentials for 100 rpm.
+## 5. Attempt 1 — Upgrade the Phone to v2
 
-| Feature | Description |
-|---------|-------------|
-| `browse_subreddit` | Browse any subreddit (hot/new/top/rising) |
-| `search_reddit` | Search across Reddit or specific subreddits |
-| `get_post_details` | Fetch post with full comment threads |
-| `user_analysis` | Analyze any Reddit user's karma and activity |
-| `reddit_explain` | Explain Reddit terms and slang |
+npm refuses:
 
-**Anonymous mode** (no credentials needed):
-```json
-{
-  "reddit": {
-    "type": "local",
-    "command": ["npx", "-y", "reddit-mcp-buddy"],
-    "enabled": true
-  }
-}
+```
+npm i -g @opencode/cli@latest
+
+npm error code EBADPLATFORM
+npm error notsup Unsupported platform for @opencode/cli@2.0.32:
+  wanted {"os":"darwin,linux,win32","cpu":"arm64,x64"}
+  (current: {"os":"android","cpu":"arm64"})
 ```
 
-**Authenticated mode** (100 rpm, optional):
-```json
-{
-  "reddit": {
-    "type": "local",
-    "command": ["npx", "-y", "reddit-mcp-buddy"],
-    "enabled": true,
-    "environment": {
-      "REDDIT_CLIENT_ID": "your_client_id",
-      "REDDIT_CLIENT_SECRET": "your_client_secret",
-      "REDDIT_USERNAME": "your_username",
-      "REDDIT_PASSWORD": "your_password"
-    }
-  }
-}
-```
+npm reports the phone's OS as `android`, and the package only ships binaries for darwin/linux/win32. There is **no `-android` build**.
 
-**Get free Reddit credentials:**
-1. Go to https://www.reddit.com/prefs/apps
-2. Click "create another app..."
-3. Select type: **script** (critical for 100 rpm)
-4. Redirect URI: `http://localhost:8080`
-5. Copy Client ID and Secret
-
----
-
-### Playwright (Browser Agent)
-Control a web browser — click buttons, fill forms, navigate websites. Supports persistent sessions so you can log into sites once and reuse the session.
-
-| Feature | Description |
-|---------|-------------|
-| `browser_navigate` | Open any URL |
-| `browser_click` | Click buttons and links |
-| `browser_type` | Type into text boxes |
-| `browser_snapshot` | See what's on the page |
-| `browser_screenshot` | Take screenshots |
-| `browser_evaluate` | Run JavaScript on the page |
-
-```json
-{
-  "playwright": {
-    "type": "local",
-    "command": ["npx", "-y", "@playwright/mcp", "--user-data-dir", "/home/amit/.playwright-auth"],
-    "enabled": true
-  }
-}
-```
-
-**How it works:**
-```
-┌─────────────────────────────────────────┐
-│  First time: Manual login               │
-│  Open browser → Log into sites          │
-│  → Cookies saved to ~/.playwright-auth/ │
-├─────────────────────────────────────────┤
-│  After restart: Auto-login              │
-│  OpenCode starts Playwright MCP         │
-│  → Reads saved cookies                  │
-│  → Already logged into Reddit/Twitter   │
-│  → AI can now browse as you             │
-└─────────────────────────────────────────┘
-```
-
-**See [Browser Agent Authentication](#browser-agent-authentication) below for setup.**
-
----
-
-### Render (Remote)
-Manage your Render cloud infrastructure — web services, databases, deploys, logs, and metrics — directly from OpenCode using natural language.
-
-| Feature | Description |
-|---------|-------------|
-| `list_services` | List all services in your workspace |
-| `create_web_service` | Create new web services (Node, Python, Go, Docker, etc.) |
-| `trigger_deploy` | Deploy or redeploy services |
-| `list_logs` | View service logs with filters |
-| `get_metrics` | CPU, memory, instance count, HTTP metrics |
-| `query_render_postgres` | Run SQL queries on your databases |
-| `create_postgres` | Create new Postgres databases |
-| `create_key_value` | Create Redis-compatible key-value stores |
-
-**Setup:**
-
-1. Get your API key from https://dashboard.render.com → Account Settings → API Keys
-2. Set environment variable:
-```bash
-export RENDER_API_KEY="rnd_your_api_key_here"
-```
-
-3. Add to `~/.zshrc` for persistence:
-```bash
-echo 'export RENDER_API_KEY="rnd_your_api_key_here"' >> ~/.zshrc
-```
-
-**Config:**
-```json
-{
-  "render": {
-    "type": "remote",
-    "url": "https://mcp.render.com/mcp",
-    "enabled": true,
-    "headers": {
-      "Authorization": "Bearer {env:RENDER_API_KEY}"
-    }
-  }
-}
-```
-
-**Example prompts:**
-- "List my Render services"
-- "Create a new Postgres database named user-db with 5 GB storage"
-- "Show me the error logs for my API service"
-- "Deploy my web service and clear the build cache"
-- "What was the busiest traffic day for my service this month?"
-
----
-
-### GitHub (Remote)
-Connects to GitHub API via personal access token.
-```json
-{
-  "github": {
-    "type": "remote",
-    "url": "https://api.githubcopilot.com/mcp/",
-    "enabled": true,
-    "headers": {
-      "Authorization": "Bearer {env:GITHUB_PERSONAL_ACCESS_TOKEN}"
-    }
-  }
-}
-```
-
----
-
-## Browser Agent Authentication
-
-To log into sites like Reddit, Twitter, or LinkedIn (which require 2FA/CAPTCHAs), use the **persistent browser session** approach:
-
-### Step 1: Open browser for manual login
+Reading the installer saved us — Termux *is* Linux underneath, so the installer mapped `uname -s = Linux` + `aarch64` → `linux-arm64` and pulled a **glibc** build:
 
 ```bash
-# Install Playwright if not already installed
-cd /tmp && npm install playwright
-
-# Create login script
-cat > /tmp/login-browser.js << 'EOF'
-const { chromium } = require('playwright');
-
-(async () => {
-  const context = await chromium.launchPersistentContext('/home/amit/.playwright-auth', {
-    headless: false,
-    viewport: { width: 1280, height: 800 }
-  });
-  
-  const page = context.pages()[0] || await context.newPage();
-  await page.goto('https://www.reddit.com/login');
-  
-  console.log('='.repeat(50));
-  console.log('BROWSER OPENED - Log into your sites:');
-  console.log('  1. Reddit is open - log in now');
-  console.log('  2. Then open Twitter, LinkedIn etc.');
-  console.log('  3. When DONE, press Ctrl+C');
-  console.log('='.repeat(50));
-  
-  process.on('SIGINT', async () => {
-    console.log('\nSaving session...');
-    await context.close();
-    console.log('Session saved to /home/amit/.playwright-auth/');
-    process.exit(0);
-  });
-  
-  await new Promise(() => {});
-})();
-EOF
-
-# Run it
-node /tmp/login-browser.js
+curl -fsSL https://opencode.ai/v2/install | bash
+# installed: ~/.opencode/bin/opencode  (v2.0.32, ELF aarch64, glibc)
 ```
 
-### Step 2: Log into sites manually
-- Reddit login page opens
-- Log in normally (complete 2FA, CAPTCHAs, etc.)
-- Open new tabs for Twitter, LinkedIn, etc.
+## 6. Attempt 2 — Why v2 Can't Run on Termux
 
-### Step 3: Save session
-- Press `Ctrl+C` in terminal
-- Session saves to `~/.playwright-auth/`
+v2 installed, printed a version, then crashed as soon as it needed its server:
 
-### Step 4: Use in OpenCode
-After restart, ask OpenCode:
-- "Open Reddit and show my homepage"
-- "Go to Twitter and check my notifications"
-- "Fill out the login form on example.com"
-
-**Note:** Google blocks automated browsers. Use the Gmail MCP server for Google/Gmail instead.
-
----
-
-## Commands Reference
-
-### Model Switching inside OpenCode
-```bash
-/model omniroute/auto/best-coding
-/model omniroute/auto/best-fast
-/model omniroute/auto/best-free
+```
+Error: Server process exited with code 127
+serve: error while loading shared libraries: serve: cannot open shared object file
 ```
 
----
+**The underlying reason:**
 
-## Termux Setup
+- Android uses **bionic libc**, not glibc. The binary asks for `/lib/ld-linux-aarch64.so.1`, which **doesn't exist** on Android.
+- Termux bridges the gap with **glibc-runner** (`grun`) — a shim that launches glibc binaries via the Termux glibc loader.
+- v1 is a **single process**, so the shim is enough.
+- v2 **re-execs itself** as a child (`serve`). Under the shim the process image is the *loader*, so the child spawn resolves wrong → exit 127.
 
-For Android devices using Termux:
+```
+v1:  [opencode]-----------------------> works
+v2:  [opencode]--spawns--> [serve] X broken through glibc shim
+```
+
+Decision — roll back to v1:
 
 ```bash
-pkg install nodejs npm
-npm install -g omniroute opencode
-
-# Start OmniRoute and connect Antigravity with your second Google account
-omniroute
+mv ~/.opencode/bin/opencode        ~/.opencode/bin/opencode.v2.broken
+mv ~/.opencode/bin/opencode.v1.bak ~/.opencode/bin/opencode   # back to v1.18.22
 ```
 
 ---
 
-## License
+## 7. OmniRoute — "free router" that fails
 
-MIT License - Use freely and modify as needed.
+The phone's config pointed its default model at `omniroute/auto/best-coding`. OmniRoute is a local proxy on the phone:
+
+```
+opencode --> OmniRoute (localhost:20128) --> OpenCode Zen free models
+             blindly forwards                        |
+                          "are you the real client?" +-- FAIL 403
+```
+
+**The key misunderstanding:** OmniRoute is **free software**, but it owns no models — it forwards to upstream "free" providers. The **free quota belongs to OpenCode Zen**, and Zen only serves the genuine client. A proxy trips **Gate 1 (identity)** — a VPN can't fix that.
+
+Live proof:
+
+```bash
+curl localhost:20128/v1/chat/completions -d '{"model":"auto/best-coding",...}'
+# {"error":{"message":"[403]: OpenCode's free tier can only be used from within
+#  OpenCode... [oc/north-mini-code-free (400), felo/felo-chat (400) ...]",
+#  "type":"permission_error"}}
+```
+
+OmniRoute itself was healthy (process alive, port answering). The rejection came from upstream.
+
+Full removal:
+
+```bash
+sv down omniroute; rm -rf $PREFIX/var/service/omniroute   # stop + disable service
+pkill -f "omn[i]route"                                    # kill processes
+npm uninstall -g omniroute                                # remove package
+rm -rf ~/.omniroute $PREFIX/var/log/omniroute             # remove data
+jq 'del(.provider.omniroute)' ~/.config/opencode/opencode.json  # clean config
+```
+
+> **Gotcha:** `pkill -f omniroute` also matches your own SSH command line and kills your session. Use a bracket pattern like `omn[i]route`.
+
+## 8. Same Wi-Fi = One Shared Quota
+
+**The student's observation:** *"When I use up the free quota on either device, it stops working on **both**. But if I switch the phone to mobile data, it works again."*
+
+**Why — the quota is per public IP:**
+
+```
+SAME WI-FI
+  laptop 192.168.29.133 +
+  phone  192.168.29.192 +--> ONE public IP --> ONE shared bucket
+                                              either device drains it
+                                              -> BOTH get 403
+
+PHONE ON 4G/5G --> different public IP --> its own fresh bucket ✅
+LAPTOP ON VPN  --> different public IP --> its own fresh bucket ✅
+```
+
+| Setup | Public IP | Result |
+|---|---|---|
+| Laptop on Wi-Fi | home | works until drained |
+| Phone on same Wi-Fi | home (same!) | ❌ both die together |
+| Phone on mobile data | carrier (new) | ✅ fresh bucket |
+| Laptop on VPN | VPN (new) | ✅ fresh bucket |
+
+**Conclusion:** one public IP = one daily free allowance. VPN, mobile data and hotspot are all the same trick — they change your egress IP.
 
 ---
 
-## Author
+## 9. Inside the Laptop's Working VPN
 
-**amiitdev** - [GitHub](https://github.com/amiitdev)
+How to see a VPN on Linux:
+
+```bash
+ip -brief addr show          # look for tun0 / wg0 / proton0
+ip route get 1.1.1.1         # which interface carries traffic?
+curl -4 https://ifconfig.me  # the public IP everyone else sees
+```
+
+```
+proton0  UNKNOWN  10.2.0.2/32
+1.1.1.1 dev proton0 ...      <- default goes through the tunnel
+egress: 212.8.253.37         <- the "outside" IP
+```
+
+Which server? (the big find)
+
+```bash
+grep -i endpoint \
+  "/run/NetworkManager/system-connections/ProtonVPN NL-FREE#250.nmconnection"
+# endpoint=212.8.253.22:443   <- server 250
+# egress 212.8.253.37         <- its public IP
+```
+
+**Why the laptop's VPN "just worked":** it is a **full tunnel** — every app, every socket — and it also **blocks IPv6** (which matters a lot next).
+
+## 10. The Phone's VPN Was Doing Nothing
+
+Which VPN apps were installed?
+
+```bash
+pm list packages | grep -iE "vpn|proxy|wireguard|proton"
+# package:com.shuttlevpn.free.proxy.gaming   <- "proxy gaming" VPN
+# package:ch.protonvpn.android               <- real Proton VPN
+# package:com.android.vpndialogs
+```
+
+A modded Proton APK (`Proton VPN v5.20.74.0 ... Mod signed.apk`) was also found in Downloads.
+
+**The smoking gun:**
+
+```
+VPN OFF -> curl -4 ifconfig.me -> 49.47.132.205
+VPN ON  -> curl -4 ifconfig.me -> 49.47.132.205   <- identical!
+```
+
+The "connected" VPN changed **nothing**. So the phone kept using the home IP (and its exhausted quota).
+
+**Why:**
+
+- ShuttleVPN-type apps are **proxy** VPNs: they route selected apps (browsers/games), not raw sockets from Termux.
+- Mods often unlock the UI but not the real routing engine.
+- Result: a "Connected" badge, but no `tun` interface covering Termux.
+
+**Rule to remember:**
+
+```
+A VPN "works" only if curl shows a DIFFERENT public IP.
+If the IP is unchanged, the VPN is not covering that app.
+```
+
+---
+
+## 11. The IPv6 Leak
+
+Once IPv4 was tunneled, opencode *still* failed. The reason: **IPv6 was leaking** straight out the home ISP.
+
+```
+opencode.ai  AAAA -> 2606:4700:78::90:0:143   (IPv6, Cloudflare)
+             A    -> 172.65.90.20              (IPv4)
+
+phone default connection -> IPv6   <- leaked home path -> 403
+```
+
+How we measured it:
+
+```bash
+curl -4 https://ifconfig.me   # IPv4 egress
+curl -6 https://ifconfig.me   # IPv6 egress  <- the leak lives here
+```
+
+| Device | IPv4 | IPv6 |
+|---|---|---|
+| Laptop (VPN) | 212.8.253.37 | (empty — blocked ✅) |
+| Phone (early) | 49.47.132.205 ❌ | 2405:201:a419:… (home!) |
+
+**Fixes:** use a VPN that blocks/routes IPv6 (Proton does); Proton VPN → Settings → Connection → Advanced → **IPv6** toggle. Goal: `curl -6` returns *nothing*.
+
+> **A wrong turn worth learning:** we tried pinning `opencode.ai` to an IPv4 in Termux's `/etc/hosts`. It **failed** — Termux's curl ignored it and still used IPv6. Lesson: don't fight the resolver; fix the tunnel.
+
+## 12. Proton VPN Settings That Matter
+
+| Setting | Where | Why |
+|---|---|---|
+| **Split tunneling = OFF** | Settings → Split Tunneling | Otherwise Termux may be excluded from the tunnel |
+| **IPv6** | Connection → Advanced → IPv6 | OFF = block IPv6 (no leak); ON = tunnel it |
+| **Kill switch** | Settings | Stops leaks if the tunnel drops |
+| **Always-on VPN** | Android → VPN → gear | Forces all apps through the tunnel |
+| **Block without VPN** | Android → VPN → gear | No traffic escapes if the VPN is down |
+| **LAN connections** *(paid)* | Connection → Advanced | Keeps local network (SSH to the phone) reachable while on VPN |
+
+**Surprise: VPN broke our SSH.** A full tunnel routes *everything* — including the LAN — so `ssh 192.168.29.192` from the laptop started **timing out**. That's expected, not a bug. Two ways around it: enable **LAN connections** (paid), or tunnel SSH over USB (next section — free and reliable).
+
+---
+
+## 13. Reaching the Phone over USB (ADB)
+
+With the VPN fully on, the LAN route to the phone is blocked → no SSH. So we used **USB**:
+
+```
+phone:8022  <-- adb forward (USB cable) -->  laptop:8022
+
+  ssh -p 8022 u0_a395@127.0.0.1     <- reaches Termux via the cable
+```
+
+Setup:
+
+1. Phone → About → tap **Build number** ×7
+2. Developer options → **USB debugging** ON
+3. Plug in the cable, tap **Allow** on the phone
+
+```bash
+adb devices                       # must show the phone
+adb forward tcp:8022 tcp:8022     # host:8022 -> device:8022
+ssh -p 8022 u0_a395@127.0.0.1     # now SSH works despite the VPN
+```
+
+**Bonus — `adb reverse`** lets the *phone* use a service on the laptop:
+
+```bash
+adb reverse tcp:8888 tcp:8888
+# phone's localhost:8888 now forwards to the laptop's localhost:8888
+```
+
+We used this exact trick to prove the phone's client was fine (next section).
+
+## 14. The Decisive Experiments
+
+**1. Is it just a header? → No**
+
+```bash
+for ua in "opencode/2.0.29" "opencode/1.18.22" "curl/8.0"; do
+  curl -s $ZEN -H "User-Agent: $ua" -d "$BODY"
+done
+# ALL three -> 403 FreeTierError
+```
+
+Even the laptop's exact User-Agent failed from raw curl. So the gate is **not** a simple header — it needs the full genuine client shape.
+
+**2. Route the phone through the laptop's IP.** We ran a tiny CONNECT proxy on the laptop (exits via its VPN), exposed it to the phone with `adb reverse`, and pointed opencode at it:
+
+```bash
+# laptop: minimal HTTP/CONNECT proxy on 127.0.0.1:8888
+# phone:
+HTTPS_PROXY=http://127.0.0.1:8888 \
+  opencode run --model opencode/deepseek-v4.1-flash-free "reply exactly: PROXY-OK"
+# -> PROXY-OK ✅
+```
+
+**Conclusion:** same phone, same v1.18.22, same free model — the **only** change was the egress IP.
+
+> ✅ **The phone's client is fine. The problem is 100% the egress IP.**
+
+---
+
+## 15. Server Roulette — The Exact IP Decides
+
+Same phone, same app, only the **server** changed each time:
+
+| Server / country | Egress IPv4 | Result |
+|---|---|---|
+| Norway (Oslo) | 205.147.17.13 | ❌ 403 |
+| Netherlands (some server) | 185.165.240.77 | ❌ 403 |
+| Netherlands ~#250 | 212.8.253.87 | ✅ works |
+| Laptop #250 | 212.8.253.37 | ✅ works |
+
+**The lesson:** it's **not** the country and **not** the client. Each VPN server has its own public IP, and each IP has its own (shared) free bucket. You drew a bad IP, then a good one. That's the whole "server roulette".
+
+## 16. Two Devices, Two Buckets — or One?
+
+Zen keys the limiter on the **full IPv4 address**:
+
+| Public IPs | Quota |
+|---|---|
+| Same IP (e.g. both on home Wi-Fi) | **ONE shared bucket** |
+| Different IPs (laptop .37, phone .87) | **TWO independent buckets** |
+
+Answering the class's question:
+
+- On the same server but different IPs → **separate** quotas. Laptop running out does **not** kill the phone.
+- Both on the same Wi-Fi → **shared** quota (that's why they died together earlier).
+- Caveat: if the VPN NATs both devices through the *same* egress IP, they share again.
+
+```bash
+# quick check on each device — must be DIFFERENT to be independent:
+curl -s -4 https://ifconfig.me
+```
+
+---
+
+## 17. The "VPN Trick" — Why It Keeps Working After Disconnect
+
+**Observation:** *"I connect the VPN for a few minutes, use opencode, disconnect — and it still works on my normal IP."*
+
+**Why — the limit is a *decaying* meter, not a ban.** Zen runs several limiters; the one you usually trip is short-window:
+
+| Limiter | Window | Recovery |
+|---|---|---|
+| Per-IP daily request count | ~24 h | slow (daily reset) |
+| **TPM / TPS** (tokens per min/sec) | seconds–minutes | **fast** |
+| Trial token budget | lifetime | never |
+
+```
+use opencode hard -> home IP trips rate limit -> 403
+connect VPN       -> traffic leaves via VPN IP
+                     home IP sits IDLE  -> its counter decays
+disconnect VPN    -> home IP is under the limit again -> works ✅
+```
+
+The VPN isn't "unblocking" your IP — it's **parking** it so the meter resets. Confirmed live: phone back on home IP (no VPN) → `NOW-OK`.
+
+**Takeaways:**
+
+- Intermittent 403 on one IP = you burst → wait a minute or two.
+- Persistent 403 = that IP's shared pool is saturated → switch server.
+- Light/steady use often needs no VPN at all.
+
+## 18. Under the Hood — OpenCode Zen's Limiter
+
+From the gateway source (`zen/util/handler.ts`):
+
+```js
+const rawIp = req.headers.get("x-real-ip") ?? ""
+const ip = rawIp.includes(":") ? rawIp.split(":").slice(0,4).join(":") : rawIp
+//                                    ^ IPv6 -> /64 prefix ; IPv4 -> full address
+
+const rateLimiter = modelInfo.allowAnonymous
+  ? createIpRateLimiter(modelInfo.id, modelInfo.rateLimit, ip, req)   // <- per IP
+  : createKeyRateLimiter(modelInfo.id, modelInfo.rateLimit, zenApiKey, req)
+
+const stickyId = sessionId ? sessionId : (authInfo?.workspaceID ?? ip)
+```
+
+- **Anonymous** requests → limited **per IP**.
+- **Keyed** requests → limited per account key.
+- IPv4 counted per exact address; IPv6 per /64.
+
+**It's a known, messy issue.** Reports describe the same misleading 403 as network-dependent and free-quota-related:
+
+| Issue | What it shows |
+|---|---|
+| #56324 / #56334 / #56373 / #56398 | 403 depends on network / exit IP; same client works elsewhere |
+| #42074 | Official client works, raw curl 429s → client shape matters |
+| #42765 | Shared IPs (CGNAT) exhaust quota for everyone |
+| #31839 | Two machines, same IP → one drains both |
+| OmniRoute #13986 | Zen enforces client identity on the free tier |
+
+---
+
+## 19. The Toolbox
+
+### `~/freecheck.sh` — probe a VPN server
+
+```bash
+#!/data/data/com.termux/files/usr/bin/bash
+ip=$(curl -s -4 --max-time 10 https://ifconfig.me)
+echo "egress IP : $ip"
+out=$(timeout 60 opencode run --model opencode/deepseek-v4.1-flash-free \
+        "reply exactly OK" 2>&1)
+if echo "$out" | grep -qi "free tier"; then
+  echo "RESULT    : FAIL - no quota on this IP. Switch server, rerun."
+else
+  echo "RESULT    : OK - free tier works on this server."
+fi
+```
+
+Run it **on the phone, in Termux**, after connecting a server. `OK` = keep it; `FAIL` = switch and retry.
+
+### Everyday diagnostic commands
+
+| Command | Purpose |
+|---|---|
+| `curl -4 ifconfig.me` | IPv4 egress (is the VPN really on?) |
+| `curl -6 ifconfig.me` | IPv6 egress (empty = no leak, good) |
+| `opencode --version` | v1 vs v2 |
+| `ip -brief addr` | interfaces (tun/wg/proton0) |
+| `ssh -p 8022 u0_a395@<ip>` | into Termux |
+| `freecheck.sh` | does this IP work right now? |
+
+## 20. Decision Tree — "Free Tier Fails"
+
+```
+opencode free model returns 403
+        |
+        +- Is curl -4 ifconfig.me DIFFERENT with VPN on?
+        |        |
+        |        +- NO  -> VPN not covering Termux
+        |        |        (split-tunnel / proxy VPN / wrong app)
+        |        +- YES -> IPv4 fine, check IPv6:
+        |                 curl -6 ifconfig.me
+        |                   empty   -> good
+        |                   home IP -> IPv6 LEAK -> block IPv6 in VPN
+        |
+        +- Still failing with a fresh, non-leaking IP?
+        |        |
+        |        +- 403 the moment you burst -> short-window limit -> WAIT
+        |        +- 403 always on this IP    -> server IP saturated
+        |                                      -> SWITCH SERVER (roulette)
+        |
+        +- Going through a proxy (OmniRoute)?
+                 -> client-identity gate -> use a DIRECT model instead
+```
+
+### One-line truths
+
+| Fact | Value |
+|---|---|
+| Quota is keyed on | **public egress IP** (IPv4 exact, IPv6 /64) |
+| Same IP means | shared bucket |
+| Different IP means | independent bucket |
+| VPN fixes | the IP gate — *not* the client gate |
+| A VPN "works" only if | `curl` shows a new IP |
+| Free tier is | metered, shared, self-healing — never guaranteed |
+
+---
+
+## 21. Takeaways & Final State
+
+**What we changed on the phone:**
+
+| Item | Before | After |
+|---|---|---|
+| OpenCode version | v1.18.22 (kept — v2 can't run on Termux) | v1.18.22 |
+| Default model | `omniroute/auto/best-coding` | `opencode/deepseek-v4.1-flash-free` |
+| OmniRoute | installed + service + provider | **fully removed** |
+| VPN | modded proxy "VPN" | Proton, full tunnel, no IPv6 leak |
+| Helper | — | `~/freecheck.sh` |
+
+**The 6 big lessons:**
+
+1. A message can be **misleading** — the same 403 hides several different causes.
+2. **Isolate one variable** at a time (we changed client, then IP, then IPv6).
+3. Two apps on one Wi-Fi share **one** quota because they share one IP.
+4. A "connected" VPN may route **nothing** — always verify the IP.
+5. The free tier is per-**IP**, metered, and **decays** over time.
+6. Server choice = **IP choice**. Same country ≠ same result.
+
+> **If you only remember one thing:**
+> Free tier works or fails based on which IP you exit from — verify with
+> `curl -4 ifconfig.me`, and switch servers until one works.
+
+---
+
+<sub>Notes generated from a real debugging session · interactive version: [`index.html`](./index.html)</sub>
+

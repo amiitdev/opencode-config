@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenCode Free-Tier Notes</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+tailwind.config = { darkMode:'class', theme:{ extend:{ colors:{
+ brand:{50:'#ecfeff',400:'#22d3ee',500:'#06b6d4',600:'#0891b2'},
+ ink:{900:'#0b1120',800:'#0f172a',700:'#1e293b',600:'#334155'} },
+ fontFamily:{ mono:['ui-monospace','SFMono-Regular','Menlo','monospace'] } } } }
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+  html{scroll-behavior:smooth;scroll-padding-top:5rem}
+  body{background:#0b1120}
+  .glow{box-shadow:0 0 40px -10px rgba(34,211,238,.35)}
+  pre{tab-size:2}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#334155;border-radius:9px}
+  .nav-a.active{color:#22d3ee;border-color:#22d3ee;background:rgba(34,211,238,.08)}
+  details>summary{cursor:pointer;list-style:none}
+  details>summary::-webkit-details-marker{display:none}
+  .sec{margin-bottom:4rem;scroll-margin-top:5rem}
+  .sec>h2{font-size:1.6rem;font-weight:800;color:#fff;display:flex;align-items:center;gap:.6rem;margin-bottom:1rem;flex-wrap:wrap}
+  .sec>h2 i{color:#22d3ee;font-size:1.1rem}
+  .card{background:rgba(15,23,42,.6);border:1px solid #1e293b;border-radius:1rem;padding:1.1rem 1.25rem}
+  .card+.card{margin-top:1rem}
+  .h3{font-weight:700;color:#e2e8f0;margin:.2rem 0 .6rem;display:flex;gap:.5rem;align-items:center}
+  .h3 i{color:#a78bfa;font-size:.9rem}
+  code{font-family:ui-monospace,Menlo,monospace}
+  .ic{background:#0f172a;border:1px solid #334155;border-radius:.35rem;padding:.1rem .4rem;color:#67e8f9;font-size:.82em}
+  pre.code{background:#0b1120;border:1px solid #1e293b;border-left:3px solid #06b6d4;border-radius:.75rem;padding:.9rem 1rem;overflow:auto;font-size:.84rem;line-height:1.6;color:#cbd5e1}
+  .ascii{background:#080e1a;border:1px dashed #334155;border-radius:.75rem;padding:.9rem 1rem;overflow:auto;font-family:ui-monospace,monospace;font-size:.78rem;line-height:1.35;color:#7dd3fc;white-space:pre}
+  table.t{width:100%;border-collapse:collapse;font-size:.86rem}
+  table.t th,table.t td{border:1px solid #1e293b;padding:.5rem .65rem;text-align:left;vertical-align:top}
+  table.t th{background:#0f172a;color:#94a3b8;font-weight:600}
+  table.t tr:nth-child(even) td{background:rgba(15,23,42,.4)}
+  .pill{display:inline-block;font-size:.72rem;font-weight:700;padding:.1rem .5rem;border-radius:999px}
+  .grid-cards{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  #desknav{scrollbar-width:none}
+  #desknav::-webkit-scrollbar{display:none}
+</style>
+</head>
+<body class="text-slate-200 antialiased">
+<header class="fixed top-0 inset-x-0 z-50 backdrop-blur bg-ink-900/80 border-b border-ink-700">
+  <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+    <a href="#top" class="flex items-center gap-2 font-bold text-lg shrink-0">
+      <i class="fa-solid fa-terminal text-brand-400"></i>
+      <span>OpenCode <span class="text-brand-400">Free-Tier</span> Notes</span>
+    </a>
+    <nav class="hidden lg:flex items-center gap-1 text-sm flex-1 min-w-0 ml-6 overflow-x-auto whitespace-nowrap" id="desknav"></nav>
+    <button id="burger" class="lg:hidden ml-3 w-10 h-10 shrink-0 grid place-items-center rounded-lg border border-ink-700 text-slate-300" aria-label="Menu">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+  </div>
+  <div id="mobile" class="lg:hidden hidden border-t border-ink-700 bg-ink-900/95 max-h-[70vh] overflow-y-auto">
+    <nav class="px-4 py-3 grid gap-1 text-sm" id="mobnav"></nav>
+  </div>
+</header>
+<div class="max-w-7xl mx-auto px-4 pt-24 pb-24 lg:grid lg:grid-cols-[260px_1fr] lg:gap-10">
+  <aside class="hidden lg:block">
+    <div class="sticky top-24">
+      <p class="text-xs uppercase tracking-widest text-slate-500 mb-3"><i class="fa-solid fa-list-ul mr-2"></i>Contents</p>
+      <nav class="grid gap-0.5 text-sm border-l border-ink-700 pl-3" id="sidenav"></nav>
+    </div>
+  </aside>
+  <main class="min-w-0" id="top">
+    <section class="mb-14">
+  <span class="inline-flex items-center gap-2 text-xs font-semibold px-3 py-1 rounded-full bg-brand-500/10 text-brand-400 border border-brand-500/30 mb-4">
+    <i class="fa-solid fa-flask"></i> DEBUGGING FIELD NOTES
+  </span>
+  <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight text-white leading-tight">
+    Why OpenCode's free tier worked on the <span class="text-brand-400">laptop</span> but not the <span class="text-rose-400">phone</span>
+  </h1>
+  <p class="mt-4 text-slate-400 text-lg max-w-3xl">
+    A full, teacher-style walkthrough of one real debugging session — from "it just doesn't work over SSH"
+    all the way down to OpenCode Zen's per-IP rate limiter. Every experiment, every error, every fix.
+  </p>
+  <div class="mt-6 flex flex-wrap gap-2 text-xs">
+    <span class="px-3 py-1 rounded-lg bg-ink-800 border border-ink-700"><i class="fa-brands fa-android text-emerald-400 mr-1"></i>Termux / Android</span>
+    <span class="px-3 py-1 rounded-lg bg-ink-800 border border-ink-700"><i class="fa-brands fa-linux text-amber-400 mr-1"></i>Linux laptop</span>
+    <span class="px-3 py-1 rounded-lg bg-ink-800 border border-ink-700"><i class="fa-solid fa-user-shield text-brand-400 mr-1"></i>Proton VPN</span>
+    <span class="px-3 py-1 rounded-lg bg-ink-800 border border-ink-700"><i class="fa-solid fa-network-wired text-violet-400 mr-1"></i>Networking</span>
+  </div>
+</section>
+<section id="s1" class="sec">
+  <h2><i class="fa-solid fa-flag-checkered"></i>1. The Mission &amp; the Symptom</h2>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-bullseye"></i>The goal</p>
+    <p>Use <strong>OpenCode</strong> (an AI coding agent) from a phone over SSH, the same way it works on the laptop — including its <strong>free models</strong>.</p>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-triangle-exclamation"></i>The symptom</p>
+    <p>OpenCode launched fine on the phone, but <strong>every request failed</strong>:</p>
+    <pre class="code">AI_APICallError: OpenCode's free tier can only be used from within OpenCode.
+Download it at https://opencode.ai and keep building.</pre>
+    <p class="mt-2 text-slate-400">The same command worked on the laptop. <em>Same account, same model, same network.</em></p>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-lightbulb"></i>What this note teaches</p>
+    <ul class="list-disc pl-5 space-y-1 text-slate-300">
+      <li>How to read a misleading error message</li>
+      <li>Why two devices on the same Wi-Fi share failure</li>
+      <li>Two different "OpenCode" versions (v1 vs v2) and which runs on Android</li>
+      <li>VPN mechanics: tunnels, IPv6 leaks, LAN blocking, server IPs</li>
+      <li>Per-IP rate limiting and how to reliably find a working server</li>
+      <li>A repeatable debugging method: isolate one variable at a time</li>
+    </ul>
+  </div>
+</section>
+<section id="s2" class="sec">
+  <h2><i class="fa-solid fa-plug"></i>2. The Starting Setup</h2>
+  <div class="ascii">  LAPTOP (Linux)                     PHONE (Android / Termux)
+  192.168.29.133                     192.168.29.192
+  opencode v2.0.29 (@opencode/cli)   opencode v1.18.22 (standalone binary)
+        │                                    ▲
+        └────────── ssh -p 8022 ─────────────┘
+             (Termux sshd listens on 8022)</div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-terminal"></i>First contact</p>
+    <pre class="code">ssh -p 8022 u0_a395@192.168.29.192 \
+  'echo CONNECTED; uname -a; which opencode; opencode --version'</pre>
+    <p class="mt-2 text-slate-400">This worked — SSH was fine. That told us the problem was <strong>inside</strong> OpenCode, not the connection.</p>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-gauge-high"></i>Very first clues</p>
+    <table class="t">
+      <tr><th>Check</th><th>Result</th></tr>
+      <tr><td><code class="ic">uname -a</code></td><td>aarch64 <strong>Android</strong> (not plain Linux!)</td></tr>
+      <tr><td><code class="ic">which opencode</code></td><td><code>~/.opencode/bin/opencode</code> (standalone ELF)</td></tr>
+      <tr><td><code class="ic">opencode --version</code></td><td><strong>1.18.22</strong> (laptop was 2.0.29)</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-bed"></i>Side-quest: sshd kept dying</p>
+    <p>Termux's SSH server repeatedly died (Android battery killer). Fix on the phone:</p>
+    <pre class="code">termux-wake-lock
+sshd</pre>
+  </div>
+</section>
+<section id="s3" class="sec">
+  <h2><i class="fa-solid fa-code-branch"></i>3. Two Different "OpenCode"s (v1 vs v2)</h2>
+  <div class="card">
+    <p>This was a <strong>huge</strong> source of confusion. There are two major product lines:</p>
+    <table class="t">
+      <tr><th></th><th>OpenCode 1 (v1)</th><th>OpenCode 2 (v2)</th></tr>
+      <tr><td>npm package</td><td><code class="ic">opencode-ai</code> (latest 1.19.3)</td><td><code class="ic">@opencode/cli</code> (2.0.32)</td></tr>
+      <tr><td>Install</td><td>curl script → <code>~/.opencode/bin</code></td><td>npm global / <code>/v2/install</code></td></tr>
+      <tr><td>Runtime</td><td>single Bun binary</td><td>multi-process (CLI + <code>serve</code>)</td></tr>
+      <tr><td>Laptop had</td><td>—</td><td><span class="pill bg-emerald-500/15 text-emerald-400">2.0.29</span></td></tr>
+      <tr><td>Phone had</td><td><span class="pill bg-amber-500/15 text-amber-400">1.18.22</span></td><td>—</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-screwdriver-wrench"></i>The installer trick</p>
+    <pre class="code">curl -fsSL https://opencode.ai/install     # installs v1 ONLY
+curl -fsSL https://opencode.ai/v2/install  # installs v2</pre>
+    <p class="mt-2 text-slate-400">The v1 installer <strong>refuses</strong> v2 versions on purpose, and vice-versa. Reading the installer script is how we discovered the <code class="ic">/v2/install</code> path.</p>
+  </div>
+</section>
+<section id="s4" class="sec">
+  <h2><i class="fa-solid fa-magnifying-glass"></i>4. Decoding the Error Message</h2>
+  <div class="card">
+    <p>The message <em>sounds</em> like a client/version problem, but it is reused for <strong>several</strong> different server-side gates. This is the #1 lesson:</p>
+    <pre class="code">"OpenCode's free tier can only be used from within OpenCode."</pre>
+    <p class="mt-2 text-slate-400">The same text is returned for (at least) two unrelated reasons:</p>
+  </div>
+  <div class="grid-cards mt-4">
+    <div class="card">
+      <p class="h3"><i class="fa-solid fa-id-card"></i>Gate 1 — Client identity</p>
+      <p class="text-slate-400">"Is the caller a genuine OpenCode client?" A third-party proxy (OmniRoute) or a raw <code class="ic">curl</code> fails this.</p>
+    </div>
+    <div class="card">
+      <p class="h3"><i class="fa-solid fa-location-dot"></i>Gate 2 — Network / IP</p>
+      <p class="text-slate-400">"From which IP is it asking?" Rate limits, reputation and region are all keyed on the egress IP.</p>
+    </div>
+  </div>
+  <div class="card mt-4">
+    <p class="h3"><i class="fa-solid fa-diagram-project"></i>Why that's confusing</p>
+    <div class="ascii">LAPTOP  opencode v2 ──direct──▶ Zen   identity ✅   IP ✅/❌
+PHONE   opencode v1 ─▶ OmniRoute ─▶ Zen   identity ❌   IP ❌
+        │
+        └─ VPN / fresh IP fixes the IP gate…
+           …but NOT the identity gate.  Same error text!</div>
+  </div>
+</section>
+<section id="s5" class="sec">
+  <h2><i class="fa-solid fa-arrow-up"></i>5. Attempt 1 — Upgrade the Phone to v2</h2>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-circle-xmark"></i>npm says "no"</p>
+    <pre class="code">npm i -g @opencode/cli@latest
+
+npm error code EBADPLATFORM
+npm error notsup Unsupported platform for @opencode/cli@2.0.32:
+  wanted {"os":"darwin,linux,win32","cpu":"arm64,x64"}
+  (current: {"os":"android","cpu":"arm64"})</pre>
+    <p class="mt-2 text-slate-400">npm reports the phone's OS as <code class="ic">android</code>, and the package only ships binaries for darwin/linux/win32. Note there is <strong>no <code class="ic">-android</code> build</strong> in its optional dependencies.</p>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-lightbulb"></i>Reading the installer saved us</p>
+    <p>Termux <em>is</em> Linux underneath. The installer's platform detection maps <code class="ic">uname -s = Linux</code> + <code class="ic">aarch64</code> → <code class="ic">linux-arm64</code>, so it pulled a <strong>glibc</strong> build:</p>
+    <pre class="code">curl -fsSL https://opencode.ai/v2/install | bash
+# installed: ~/.opencode/bin/opencode  (v2.0.32, ELF aarch64, glibc)</pre>
+  </div>
+</section>
+<section id="s6" class="sec">
+  <h2><i class="fa-solid fa-bomb"></i>6. Attempt 2 — Why v2 Can't Run on Termux</h2>
+  <div class="card">
+    <p>v2 installed, and even printed a version — but crashed as soon as it needed its server:</p>
+    <pre class="code">Error: Server process exited with code 127
+serve: error while loading shared libraries: serve: cannot open shared object file</pre>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-microchip"></i>The underlying reason</p>
+    <ul class="list-disc pl-5 space-y-1 text-slate-300">
+      <li>Android uses <strong>bionic libc</strong>, not glibc. The binary asks for <code class="ic">/lib/ld-linux-aarch64.so.1</code> which <strong>doesn't exist</strong> on Android.</li>
+      <li>Termux bridges the gap with <strong>glibc-runner</strong> (<code class="ic">grun</code>) — a shim that launches glibc binaries via the Termux glibc loader.</li>
+      <li>v1 is a <strong>single process</strong>, so the shim is enough.</li>
+      <li>v2 <strong>re-execs itself</strong> as a child (<code class="ic">serve</code>). Under the shim, the process image is the <em>loader</em>, so the child spawn resolves wrong → exit 127.</li>
+    </ul>
+    <div class="ascii">v1:  [opencode]────────────────────────▶ works
+v2:  [opencode]──spawns──▶ [serve] ✖ broken through glibc shim</div>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-rotate-left"></i>Decision</p>
+    <pre class="code">mv ~/.opencode/bin/opencode      ~/.opencode/bin/opencode.v2.broken
+mv ~/.opencode/bin/opencode.v1.bak ~/.opencode/bin/opencode   # back to v1.18.22</pre>
+  </div>
+</section>
+<section id="s7" class="sec">
+  <h2><i class="fa-solid fa-route"></i>7. OmniRoute — "free router" that fails</h2>
+  <div class="card">
+    <p>The phone's config pointed its default model at <code class="ic">omniroute/auto/best-coding</code>. OmniRoute is a local proxy on the phone:</p>
+    <div class="ascii">opencode ──▶ OmniRoute (localhost:20128) ──▶ OpenCode Zen free models
+             blindly forwards                                  │
+                                    "are you the real client?" ─┘  ❌ 403</div>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-circle-question"></i>The key misunderstanding</p>
+    <p class="text-slate-300">OmniRoute is <strong>free software</strong> — but it owns no models. It forwards to upstream "free" providers. The <strong>free quota belongs to OpenCode Zen</strong>, and Zen only serves the genuine client. So a proxy trips <strong>Gate 1 (identity)</strong> — a VPN can't fix that.</p>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-flask"></i>Live proof</p>
+    <pre class="code">curl localhost:20128/v1/chat/completions -d '{"model":"auto/best-coding",...}'
+{"error":{"message":"[403]: OpenCode's free tier can only be used from within
+ OpenCode... [oc/north-mini-code-free (400), felo/felo-chat (400) ...]",
+ "type":"permission_error"}}</pre>
+    <p class="mt-2 text-slate-400">OmniRoute itself was healthy (process alive, port answering). The rejection came from upstream.</p>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-broom"></i>Full removal (what we did)</p>
+    <pre class="code">sv down omniroute; rm -rf $PREFIX/var/service/omniroute   # stop + disable service
+pkill -f "omn[i]route"                                    # kill processes
+npm uninstall -g omniroute                                # remove package
+rm -rf ~/.omniroute $PREFIX/var/log/omniroute             # remove data
+jq 'del(.provider.omniroute)' ~/.config/opencode/opencode.json  # clean config</pre>
+    <p class="mt-2 text-amber-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i>Gotcha: <code class="ic">pkill -f omniroute</code> also matches your own SSH command line and kills your session. Use a bracket pattern like <code class="ic">omn[i]route</code>.</p>
+  </div>
+</section>
+<section id="s8" class="sec">
+  <h2><i class="fa-solid fa-wifi"></i>8. Same Wi-Fi = One Shared Quota</h2>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-comment-dots"></i>The student's observation</p>
+    <p class="text-slate-300">"When I use up the free quota on either device, it stops working on <strong>both</strong>. But if I switch the phone to mobile data, it works again."</p>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-key"></i>Why — the quota is per <u>public IP</u></p>
+    <div class="ascii">SAME WI-FI
+  laptop 192.168.29.133 ┐
+  phone  192.168.29.192 ┘──▶ ONE public IP ──▶ ONE shared bucket 🪣
+                                              either device drains it
+                                              → BOTH get 403
+
+PHONE ON 4G/5G ──▶ different public IP ──▶ its own fresh bucket 🪣 ✅
+LAPTOP ON VPN  ──▶ different public IP ──▶ its own fresh bucket 🪣 ✅</div>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-table-list"></i>Mapping the observations</p>
+    <table class="t">
+      <tr><th>Setup</th><th>Public IP</th><th>Result</th></tr>
+      <tr><td>Laptop on Wi-Fi</td><td>home</td><td>works until drained</td></tr>
+      <tr><td>Phone on same Wi-Fi</td><td>home (same!)</td><td class="text-rose-400">❌ both die together</td></tr>
+      <tr><td>Phone on mobile data</td><td>carrier (new)</td><td class="text-emerald-400">✅ fresh bucket</td></tr>
+      <tr><td>Laptop on VPN</td><td>VPN (new)</td><td class="text-emerald-400">✅ fresh bucket</td></tr>
+    </table>
+    <p class="mt-2 text-slate-400">Conclusion: <strong>one public IP = one daily free allowance.</strong> VPN, mobile data and hotspot are all the same trick — they change your egress IP.</p>
+  </div>
+</section>
+<section id="s9" class="sec">
+  <h2><i class="fa-solid fa-shield-halved"></i>9. Inside the Laptop's Working VPN</h2>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-eye"></i>How to see a VPN on Linux</p>
+    <pre class="code">ip -brief addr show          # look for tun0 / wg0 / proton0
+ip route get 1.1.1.1         # which interface carries traffic?
+curl -4 https://ifconfig.me  # the public IP everyone else sees</pre>
+    <pre class="code">proton0  UNKNOWN  10.2.0.2/32
+1.1.1.1 dev proton0 ...      # ← default goes through the tunnel
+egress: 212.8.253.37         # ← the "outside" IP</pre>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-server"></i>Which server? (the big find)</p>
+    <pre class="code"># NetworkManager stores the active WireGuard config:
+grep -i endpoint \
+  "/run/NetworkManager/system-connections/ProtonVPN NL-FREE#250.nmconnection"
+# endpoint=212.8.253.22:443   ← server 250
+# egress 212.8.253.37         ← its public IP</pre>
+    <p class="mt-2 text-slate-400">So we learned <strong>exactly</strong> which server the laptop used — the key to a later fix.</p>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-circle-check"></i>Why the laptop's VPN "just worked"</p>
+    <p class="text-slate-300">It is a <strong>full tunnel</strong>: every app, every socket, and it also <strong>blocks IPv6</strong> (we'll see why that matters next).</p>
+  </div>
+</section>
+<section id="s10" class="sec">
+  <h2><i class="fa-solid fa-mobile-screen"></i>10. The Phone's VPN Was Doing Nothing</h2>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-list"></i>Which VPN apps were installed?</p>
+    <pre class="code">pm list packages | grep -iE "vpn|proxy|wireguard|proton"
+package:com.shuttlevpn.free.proxy.gaming   ← "proxy gaming" VPN
+package:ch.protonvpn.android               ← real Proton VPN
+package:com.android.vpndialogs</pre>
+    <p class="mt-2 text-slate-400">A modded Proton APK (<code class="ic">Proton VPN v5.20.74.0 ... Mod signed.apk</code>) was also found in Downloads.</p>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-equals"></i>The smoking gun</p>
+    <pre class="code">VPN OFF → curl -4 ifconfig.me → 49.47.132.205
+VPN ON  → curl -4 ifconfig.me → 49.47.132.205   ← identical!</pre>
+    <p class="mt-2 text-slate-300">The "connected" VPN changed <strong>nothing</strong>. So the phone kept using the home IP (and its exhausted quota).</p>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-circle-info"></i>Why</p>
+    <ul class="list-disc pl-5 space-y-1 text-slate-300">
+      <li>ShuttleVPN-type apps are <strong>proxy</strong> VPNs: they route selected apps (browsers/games), not raw sockets from Termux.</li>
+      <li>Mods often unlock the UI but not the real routing engine.</li>
+      <li>Result: "Connected" badge, but no `tun` interface covering Termux.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-vial"></i>Rule to remember</p>
+    <pre class="code">A VPN "works" only if curl shows a DIFFERENT public IP.
+If the IP is unchanged, the VPN is not covering that app.</pre>
+  </div>
+</section>
+<section id="s11" class="sec">
+  <h2><i class="fa-solid fa-6"></i>11. The IPv6 Leak</h2>
+  <div class="card">
+    <p>Once IPv4 was tunneled, opencode <em>still</em> failed. The reason: <strong>IPv6 was leaking</strong> straight out the home ISP.</p>
+    <pre class="code">opencode.ai  AAAA → 2606:4700:78::90:0:143   (IPv6, Cloudflare)
+             A    → 172.65.90.20              (IPv4)
+
+phone default connection → IPv6   ← leaked home path → 403</pre>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-magnifying-glass-chart"></i>How we measured it</p>
+    <pre class="code">curl -4 https://ifconfig.me   # IPv4 egress
+curl -6 https://ifconfig.me   # IPv6 egress  ← the leak lives here</pre>
+    <table class="t mt-3">
+      <tr><th>Device</th><th>IPv4</th><th>IPv6</th></tr>
+      <tr><td>Laptop (VPN)</td><td>212.8.253.37</td><td class="text-emerald-400">(empty — blocked ✅)</td></tr>
+      <tr><td>Phone (early)</td><td>49.47.132.205 ❌</td><td class="text-rose-400">2405:201:a419:… (home!)</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-screwdriver-wrench"></i>Fixes</p>
+    <ul class="list-disc pl-5 space-y-1 text-slate-300">
+      <li>Use a VPN that <strong>blocks or routes IPv6</strong> (Proton does).</li>
+      <li>Proton VPN → Settings → Connection → Advanced → <strong>IPv6</strong> toggle.</li>
+      <li>Goal: <code class="ic">curl -6</code> returns <em>nothing</em> → no leak.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-triangle-exclamation"></i>A wrong turn worth learning</p>
+    <p class="text-slate-400">We tried pinning <code class="ic">opencode.ai</code> to an IPv4 in Termux's <code class="ic">/etc/hosts</code>. It <strong>failed</strong> — Termux's curl ignored it and still used IPv6. Lesson: don't fight the resolver; fix the tunnel.</p>
+  </div>
+</section>
+<section id="s12" class="sec">
+  <h2><i class="fa-solid fa-sliders"></i>12. Proton VPN Settings That Matter</h2>
+  <div class="card">
+    <table class="t">
+      <tr><th>Setting</th><th>Where</th><th>Why</th></tr>
+      <tr><td><strong>Split tunneling = OFF</strong></td><td>Settings → Split Tunneling</td><td>Otherwise Termux may be excluded from the tunnel</td></tr>
+      <tr><td><strong>IPv6</strong></td><td>Connection → Advanced → IPv6</td><td>OFF = block IPv6 (no leak); ON = tunnel it</td></tr>
+      <tr><td><strong>Kill switch</strong></td><td>Settings</td><td>Stops leaks if the tunnel drops</td></tr>
+      <tr><td><strong>Always-on VPN</strong></td><td>Android → VPN → ⚙</td><td>Forces all apps through the tunnel</td></tr>
+      <tr><td><strong>Block without VPN</strong></td><td>Android → VPN → ⚙</td><td>No traffic escapes if the VPN is down</td></tr>
+      <tr><td><strong>LAN connections</strong> <span class="pill bg-amber-500/15 text-amber-400">paid</span></td><td>Connection → Advanced</td><td>Keeps local network (SSH to the phone) reachable while on VPN</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-plug-circle-xmark"></i>Surprise: VPN broke our SSH</p>
+    <p class="text-slate-300">A full tunnel routes <em>everything</em> — including the LAN. So <code class="ic">ssh 192.168.29.192</code> from the laptop started <strong>timing out</strong>. That's expected, not a bug.</p>
+    <p class="mt-2 text-slate-400">Two ways around it: enable <strong>LAN connections</strong> (paid), or tunnel SSH over USB (next section — free and reliable).</p>
+  </div>
+</section>
+<section id="s13" class="sec">
+  <h2><i class="fa-brands fa-usb"></i>13. Reaching the Phone over USB (ADB)</h2>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-road-barrier"></i>The problem</p>
+    <p class="text-slate-300">With the VPN fully on, the LAN route to the phone is blocked → no SSH. We needed a path that ignores the network entirely: <strong>USB</strong>.</p>
+    <div class="ascii">phone:8022  ←── adb forward (USB cable) ──▶  laptop:8022
+ 
+  ssh -p 8022 u0_a395@127.0.0.1     ← reaches Termux via the cable</div>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-gear"></i>Setup</p>
+    <ol class="list-decimal pl-5 space-y-1 text-slate-300">
+      <li>Phone → About → tap <strong>Build number</strong> ×7</li>
+      <li>Developer options → <strong>USB debugging</strong> ON</li>
+      <li>Plug in the cable, tap <strong>Allow</strong> on the phone</li>
+    </ol>
+    <pre class="code">adb devices                       # must show the phone
+adb forward tcp:8022 tcp:8022     # host:8022 → device:8022
+ssh -p 8022 u0_a395@127.0.0.1     # now SSH works despite the VPN</pre>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-arrows-turn-to-dots"></i>Bonus: <code class="ic">adb reverse</code></p>
+    <p class="text-slate-300">The reverse direction lets the <em>phone</em> use a service on the laptop:</p>
+    <pre class="code">adb reverse tcp:8888 tcp:8888
+# phone's localhost:8888 now forwards to the laptop's localhost:8888</pre>
+    <p class="mt-2 text-slate-400">We used this exact trick to prove the phone's client was fine (next section).</p>
+  </div>
+</section>
+<section id="s14" class="sec">
+  <h2><i class="fa-solid fa-flask-vial"></i>14. The Decisive Experiments</h2>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-1"></i>Is it just a header? → No</p>
+    <pre class="code">for ua in "opencode/2.0.29" "opencode/1.18.22" "curl/8.0"; do
+  curl -s $ZEN -H "User-Agent: $ua" -d "$BODY"
+done
+# ALL three → 403 FreeTierError</pre>
+    <p class="mt-2 text-slate-400">Even the laptop's exact User-Agent failed from raw curl. So the gate is <strong>not</strong> a simple header — it needs the full genuine client shape.</p>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-2"></i>Then: route the phone through the laptop's IP</p>
+    <p class="text-slate-300">We ran a tiny CONNECT proxy on the laptop (exits via its VPN), exposed it to the phone with <code class="ic">adb reverse</code>, and pointed opencode at it:</p>
+    <pre class="code"># laptop: minimal HTTP/CONNECT proxy on 127.0.0.1:8888
+# phone:
+HTTPS_PROXY=http://127.0.0.1:8888 \
+  opencode run --model opencode/deepseek-v4.1-flash-free "reply exactly: PROXY-OK"
+# → PROXY-OK ✅</pre>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-bullseye"></i>Conclusion</p>
+    <p class="text-slate-300">Same phone, same v1.18.22, same free model. The <strong>only</strong> change was the egress IP. So:</p>
+    <p class="mt-2 text-emerald-400 font-semibold"><i class="fa-solid fa-check mr-1"></i>The phone's client is fine. The problem is 100% the egress IP.</p>
+  </div>
+</section>
+<section id="s15" class="sec">
+  <h2><i class="fa-solid fa-dice"></i>15. Server Roulette — The Exact IP Decides</h2>
+  <div class="card">
+    <p>Same phone, same app, only the <strong>server</strong> changed each time:</p>
+    <table class="t">
+      <tr><th>Server / country</th><th>Egress IPv4</th><th>Result</th></tr>
+      <tr><td>Norway (Oslo)</td><td>205.147.17.13</td><td class="text-rose-400">❌ 403</td></tr>
+      <tr><td>Netherlands (some server)</td><td>185.165.240.77</td><td class="text-rose-400">❌ 403</td></tr>
+      <tr><td>Netherlands ~#250</td><td>212.8.253.87</td><td class="text-emerald-400">✅ works</td></tr>
+      <tr><td>Laptop #250</td><td>212.8.253.37</td><td class="text-emerald-400">✅ works</td></tr>
+    </table>
+    <p class="mt-3 text-slate-400">Different country, different IP, different answer — even within the same provider and the same "Netherlands".</p>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-lightbulb"></i>The lesson</p>
+    <p class="text-slate-300">It's <strong>not</strong> the country and <strong>not</strong> the client. Each VPN server has its own public IP, and each IP has its own (shared) free bucket. You drew a bad IP, then a good one. That's the whole "server roulette".</p>
+  </div>
+</section>
+<section id="s16" class="sec">
+  <h2><i class="fa-solid fa-bucket"></i>16. Two Devices, Two Buckets — or One?</h2>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-scale-balanced"></i>The rule</p>
+    <p class="text-slate-300">Zen keys the limiter on the <strong>full IPv4 address</strong>. So:</p>
+    <table class="t mt-2">
+      <tr><th>Public IPs</th><th>Quota</th></tr>
+      <tr><td>Same IP (e.g. both on home Wi-Fi)</td><td class="text-rose-400">ONE shared bucket</td></tr>
+      <tr><td>Different IPs (laptop .37, phone .87)</td><td class="text-emerald-400">TWO independent buckets</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-chart-simple"></i>Answering the class's question</p>
+    <ul class="list-disc pl-5 space-y-1 text-slate-300">
+      <li>On the same server but different IPs → <strong>separate</strong> quotas. Laptop running out does <strong>not</strong> kill the phone.</li>
+      <li>Both on the same Wi-Fi → <strong>shared</strong> quota (that's why they died together earlier).</li>
+      <li>Caveat: if the VPN NATs both devices through the <em>same</em> egress IP, they share again.</li>
+    </ul>
+    <pre class="code mt-3"># quick check on each device — must be DIFFERENT to be independent:
+curl -s -4 https://ifconfig.me</pre>
+  </div>
+</section>
+<section id="s17" class="sec">
+  <h2><i class="fa-solid fa-clock-rotate-left"></i>17. The "VPN Trick" — Why It Keeps Working After Disconnect</h2>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-comment-dots"></i>Observation</p>
+    <p class="text-slate-300">"I connect the VPN for a few minutes, use opencode, disconnect — and it still works on my normal IP."</p>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-hourglass-half"></i>Why — the limit is a <u>decaying</u> meter, not a ban</p>
+    <p class="text-slate-300">Zen runs several limiters. The one you usually trip is short-window:</p>
+    <table class="t mt-2">
+      <tr><th>Limiter</th><th>Window</th><th>Recovery</th></tr>
+      <tr><td>Per-IP daily request count</td><td>~24 h</td><td>slow (daily reset)</td></tr>
+      <tr><td><strong>TPM / TPS</strong> (tokens per min/sec)</td><td>seconds–minutes</td><td class="text-emerald-400">fast</td></tr>
+      <tr><td>Trial token budget</td><td>lifetime</td><td>never</td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-repeat"></i>The mechanism</p>
+    <div class="ascii">use opencode hard → home IP trips rate limit → 403
+connect VPN         → traffic leaves via VPN IP
+                      home IP sits IDLE  → its counter decays
+disconnect VPN      → home IP is under the limit again → works ✅</div>
+    <p class="mt-3 text-slate-400">The VPN isn't "unblocking" your IP — it's <strong>parking</strong> it so the meter resets. Confirmed live: phone back on home IP (no VPN) → <code class="ic">NOW-OK</code>.</p>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-key"></i>Takeaways</p>
+    <ul class="list-disc pl-5 space-y-1 text-slate-300">
+      <li>Intermittent 403 on one IP = you burst → wait a minute or two.</li>
+      <li>Persistent 403 = that IP's shared pool is saturated → switch server.</li>
+      <li>Light/steady use often needs no VPN at all.</li>
+    </ul>
+  </div>
+</section>
+<section id="s18" class="sec">
+  <h2><i class="fa-solid fa-microscope"></i>18. Under the Hood — OpenCode Zen's Limiter</h2>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-code"></i>From the gateway source (<code class="ic">zen/util/handler.ts</code>)</p>
+    <pre class="code">const rawIp = req.headers.get("x-real-ip") ?? ""
+const ip = rawIp.includes(":") ? rawIp.split(":").slice(0,4).join(":") : rawIp
+//                                    └ IPv6 → /64 prefix ; IPv4 → full address
+
+const rateLimiter = modelInfo.allowAnonymous
+  ? createIpRateLimiter(modelInfo.id, modelInfo.rateLimit, ip, req)   // ← per IP
+  : createKeyRateLimiter(modelInfo.id, modelInfo.rateLimit, zenApiKey, req)
+
+const stickyId = sessionId ? sessionId : (authInfo?.workspaceID ?? ip)</pre>
+    <ul class="list-disc pl-5 space-y-1 text-slate-300 mt-2">
+      <li><strong>Anonymous</strong> requests → limited <strong>per IP</strong>.</li>
+      <li><strong>Keyed</strong> requests → limited per account key.</li>
+      <li>IPv4 counted per exact address; IPv6 per /64.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-quote-left"></i>It's a known, messy issue</p>
+    <p class="text-slate-400 text-sm">Reports describe the same misleading 403 as network-dependent and free-quota-related. Relevant reading:</p>
+    <table class="t mt-2">
+      <tr><th>Issue</th><th>What it shows</th></tr>
+      <tr><td>#56324 / #56334 / #56373 / #56398</td><td>403 depends on network / exit IP; same client works elsewhere</td></tr>
+      <tr><td>#42074</td><td>Official client works, raw curl 429s → client shape matters</td></tr>
+      <tr><td>#42765</td><td>Shared IPs (CGNAT) exhaust quota for everyone</td></tr>
+      <tr><td>#31839</td><td>Two machines, same IP → one drains both</td></tr>
+      <tr><td>OmniRoute #13986</td><td>Zen enforces client identity on the free tier</td></tr>
+    </table>
+  </div>
+</section>
+<section id="s19" class="sec">
+  <h2><i class="fa-solid fa-toolbox"></i>19. The Toolbox</h2>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-file-code"></i><code class="ic">~/freecheck.sh</code> — probe a VPN server</p>
+    <pre class="code">#!/data/data/com.termux/files/usr/bin/bash
+ip=$(curl -s -4 --max-time 10 https://ifconfig.me)
+echo "egress IP : $ip"
+out=$(timeout 60 opencode run --model opencode/deepseek-v4.1-flash-free \
+        "reply exactly OK" 2>&1)
+if echo "$out" | grep -qi "free tier"; then
+  echo "RESULT    : FAIL - no quota on this IP. Switch server, rerun."
+else
+  echo "RESULT    : OK - free tier works on this server."
+fi</pre>
+    <p class="mt-2 text-slate-400">Run it <strong>on the phone, in Termux</strong>, after connecting a server. OK = keep it; FAIL = switch and retry.</p>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-terminal"></i>Everyday diagnostic commands</p>
+    <table class="t">
+      <tr><th>Command</th><th>Purpose</th></tr>
+      <tr><td><code class="ic">curl -4 ifconfig.me</code></td><td>IPv4 egress (is the VPN really on?)</td></tr>
+      <tr><td><code class="ic">curl -6 ifconfig.me</code></td><td>IPv6 egress (empty = no leak, good)</td></tr>
+      <tr><td><code class="ic">opencode --version</code></td><td>v1 vs v2</td></tr>
+      <tr><td><code class="ic">ip -brief addr</code></td><td>interfaces (tun/wg/proton0)</td></tr>
+      <tr><td><code class="ic">ssh -p 8022 u0_a395@&lt;ip&gt;</code></td><td>into Termux</td></tr>
+      <tr><td><code class="ic">freecheck.sh</code></td><td>does this IP work right now?</td></tr>
+    </table>
+  </div>
+</section>
+<section id="s20" class="sec">
+  <h2><i class="fa-solid fa-sitemap"></i>20. Decision Tree — "Free Tier Fails"</h2>
+  <div class="card">
+    <div class="ascii">opencode free model returns 403
+        │
+        ├─ Is curl -4 ifconfig.me DIFFERENT with VPN on?
+        │        │
+        │        ├─ NO  → VPN not covering Termux
+        │        │        (split-tunnel / proxy VPN / wrong app)
+        │        └─ YES → IPv4 fine, check IPv6:
+        │                 curl -6 ifconfig.me
+        │                   empty  → good
+        │                   home IP → IPv6 LEAK → block IPv6 in VPN
+        │
+        ├─ Still failing with a fresh, non-leaking IP?
+        │        │
+        │        ├─ 403 the moment you burst → short-window limit → WAIT
+        │        └─ 403 always on this IP → server IP saturated
+        │                                   → SWITCH SERVER (roulette)
+        │
+        └─ Going through a proxy (OmniRoute)?
+                 → client-identity gate → use a DIRECT model instead</div>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-book"></i>One-line truths</p>
+    <table class="t">
+      <tr><td>Quota is keyed on</td><td><strong>public egress IP</strong> (IPv4 exact, IPv6 /64)</td></tr>
+      <tr><td>Same IP means</td><td>shared bucket</td></tr>
+      <tr><td>Different IP means</td><td>independent bucket</td></tr>
+      <tr><td>VPN fixes</td><td>the IP gate — <em>not</em> the client gate</td></tr>
+      <tr><td>A VPN "works" only if</td><td><code class="ic">curl</code> shows a new IP</td></tr>
+      <tr><td>Free tier is</td><td>metered, shared, self-healing — never guaranteed</td></tr>
+    </table>
+  </div>
+</section>
+<section id="s21" class="sec">
+  <h2><i class="fa-solid fa-graduation-cap"></i>21. Takeaways &amp; Final State</h2>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-list-check"></i>What we changed on the phone</p>
+    <table class="t">
+      <tr><th>Item</th><th>Before</th><th>After</th></tr>
+      <tr><td>OpenCode version</td><td>v1.18.22 (kept — v2 can't run on Termux)</td><td>v1.18.22</td></tr>
+      <tr><td>Default model</td><td>omniroute/auto/best-coding</td><td>opencode/deepseek-v4.1-flash-free</td></tr>
+      <tr><td>OmniRoute</td><td>installed + service + provider</td><td class="text-emerald-400">fully removed</td></tr>
+      <tr><td>VPN</td><td>modded proxy "VPN"</td><td>Proton, full tunnel, no IPv6 leak</td></tr>
+      <tr><td>Helper</td><td>—</td><td><code class="ic">~/freecheck.sh</code></td></tr>
+    </table>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-trophy"></i>The 6 big lessons</p>
+    <ol class="list-decimal pl-5 space-y-1 text-slate-300">
+      <li>A message can be <strong>misleading</strong> — the same 403 hides several different causes.</li>
+      <li><strong>Isolate one variable</strong> at a time (we changed client, then IP, then IPv6).</li>
+      <li>Two apps on one Wi-Fi share <strong>one</strong> quota because they share one IP.</li>
+      <li>A "connected" VPN may route <strong>nothing</strong> — always verify the IP.</li>
+      <li>The free tier is per-<strong>IP</strong>, metered, and <strong>decays</strong> over time.</li>
+      <li>Server choice = <strong>IP choice</strong>. Same country ≠ same result.</li>
+    </ol>
+  </div>
+  <div class="card">
+    <p class="h3"><i class="fa-solid fa-comment-dots"></i>If you only remember one thing</p>
+    <p class="text-brand-400 font-semibold">"Free tier works or fails based on which IP you exit from — verify with <code class="ic">curl -4 ifconfig.me</code>, and switch servers until one works."</p>
+  </div>
+</section>
+  </main>
+</div>
+<footer class="border-t border-ink-700 mt-8">
+  <div class="max-w-7xl mx-auto px-4 py-10 text-sm text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-3">
+    <p><i class="fa-solid fa-terminal text-brand-400 mr-2"></i>OpenCode Free-Tier Notes — a real debugging session</p>
+    <p class="flex items-center gap-4">
+      <span><i class="fa-brands fa-android mr-1"></i>Termux</span>
+      <span><i class="fa-solid fa-shield-halved mr-1"></i>Proton VPN</span>
+      <span><i class="fa-solid fa-route mr-1"></i>Per-IP quotas</span>
+    </p>
+  </div>
+</footer>
+<button id="totop" class="fixed bottom-6 right-6 w-11 h-11 rounded-full bg-brand-500 text-ink-900 grid place-items-center shadow-lg glow opacity-0 pointer-events-none transition">
+  <i class="fa-solid fa-arrow-up"></i>
+</button>
+<script>
+const secs=[...document.querySelectorAll('section.sec')];
+const items=secs.map(s=>{
+  const h=s.querySelector('h2');
+  const label=h.textContent.trim().replace(/\s+/g,' ');
+  return {id:s.id,label};
+});
+const mk=(a,c)=>{a.innerHTML=items.map(i=>
+  `<a href="#${i.id}" data-t="${i.id}" class="${c}">${i.label}</a>`).join('');};
+mk(document.getElementById('desknav'),'px-3 py-2 rounded-lg text-slate-400 hover:text-brand-400 hover:bg-ink-800 transition');
+mk(document.getElementById('mobnav'),'block px-3 py-2 rounded-lg text-slate-300 hover:bg-ink-800');
+mk(document.getElementById('sidenav'),'nav-a block pl-3 -ml-px border-l-2 border-transparent py-1 text-slate-400 hover:text-brand-400 transition');
+const burger=document.getElementById('burger'),mobile=document.getElementById('mobile');
+burger.onclick=()=>{mobile.classList.toggle('hidden');
+  burger.innerHTML=mobile.classList.contains('hidden')
+    ?'<i class="fa-solid fa-bars"></i>':'<i class="fa-solid fa-xmark"></i>';};
+mobile.querySelectorAll('a').forEach(a=>a.onclick=()=>{mobile.classList.add('hidden');
+  burger.innerHTML='<i class="fa-solid fa-bars"></i>';});
+const obs=new IntersectionObserver(es=>{
+  es.forEach(e=>{ if(e.isIntersecting){
+    document.querySelectorAll('[data-t]').forEach(a=>a.classList.toggle('active',a.dataset.t===e.target.id));
+  }});
+},{rootMargin:'-20% 0px -70% 0px'});
+secs.forEach(s=>obs.observe(s));
+const totop=document.getElementById('totop');
+addEventListener('scroll',()=>{const on=scrollY>600;
+  totop.classList.toggle('opacity-0',!on);totop.classList.toggle('pointer-events-none',!on);});
+totop.onclick=()=>scrollTo({top:0,behavior:'smooth'});
+</script>
+</body>
+</html>
